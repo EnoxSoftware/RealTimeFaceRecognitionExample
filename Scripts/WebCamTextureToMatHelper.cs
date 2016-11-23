@@ -188,33 +188,33 @@ namespace RealTimeFaceRecognitionSample
 
             while (true) {
                 // If you want to use webcamTexture.width and webcamTexture.height on iOS, you have to wait until webcamTexture.didUpdateThisFrame == 1, otherwise these two values will be equal to 16. (http://forum.unity3d.com/threads/webcamtexture-and-error-0x0502.123922/)
-#if UNITY_IOS && !UNITY_EDITOR && (UNITY_4_6_3 || UNITY_4_6_4 || UNITY_5_0_0 || UNITY_5_0_1)
+                #if UNITY_IOS && !UNITY_EDITOR && (UNITY_4_6_3 || UNITY_4_6_4 || UNITY_5_0_0 || UNITY_5_0_1)
                 if (webCamTexture.width > 16 && webCamTexture.height > 16) {
-#else
+                #else
                 if (webCamTexture.didUpdateThisFrame) {
-#if UNITY_IOS && !UNITY_EDITOR && UNITY_5_2                                    
+                    #if UNITY_IOS && !UNITY_EDITOR && UNITY_5_2                                    
                     while (webCamTexture.width <= 16) {
                         webCamTexture.GetPixels32 ();
                         yield return new WaitForEndOfFrame ();
                     } 
-#endif
-#endif
+                    #endif
+                    #endif
 
                     Debug.Log ("name " + webCamTexture.name + " width " + webCamTexture.width + " height " + webCamTexture.height + " fps " + webCamTexture.requestedFPS);
                     Debug.Log ("videoRotationAngle " + webCamTexture.videoRotationAngle + " videoVerticallyMirrored " + webCamTexture.videoVerticallyMirrored + " isFrongFacing " + webCamDevice.isFrontFacing);
 
                     if (colors == null || colors.Length != webCamTexture.width * webCamTexture.height)
-                        colors = new Color32 [webCamTexture.width * webCamTexture.height];
+                        colors = new Color32[webCamTexture.width * webCamTexture.height];
                     rgbaMat = new Mat (webCamTexture.height, webCamTexture.width, CvType.CV_8UC4);
 
                     //Debug.Log ("Screen.orientation " + Screen.orientation);
                     screenOrientation = Screen.orientation;
 
-#if !UNITY_EDITOR && !UNITY_STANDALONE 
+                    #if !UNITY_EDITOR && !(UNITY_STANDALONE || UNITY_WEBGL) 
                     if (screenOrientation == ScreenOrientation.Portrait || screenOrientation == ScreenOrientation.PortraitUpsideDown) {
                         rotatedRgbaMat = new Mat (webCamTexture.width, webCamTexture.height, CvType.CV_8UC4);
                     }
-#endif
+                    #endif
 
                     initWaiting = false;
                     initDone = true;
@@ -303,15 +303,15 @@ namespace RealTimeFaceRecognitionSample
             if (!initDone)
                 return false;
 
-#if UNITY_IOS && !UNITY_EDITOR && (UNITY_4_6_3 || UNITY_4_6_4 || UNITY_5_0_0 || UNITY_5_0_1)
+            #if UNITY_IOS && !UNITY_EDITOR && (UNITY_4_6_3 || UNITY_4_6_4 || UNITY_5_0_0 || UNITY_5_0_1)
             if (webCamTexture.width > 16 && webCamTexture.height > 16) {
                 return true;
             } else {
                 return false;
             }
-#else
+            #else
             return webCamTexture.didUpdateThisFrame;
-#endif
+            #endif
         }
 
         /// <summary>
@@ -395,7 +395,7 @@ namespace RealTimeFaceRecognitionSample
         /// Gets the buffer colors.
         /// </summary>
         /// <returns>The buffer colors.</returns>
-        public Color32 [] GetBufferColors ()
+        public Color32[] GetBufferColors ()
         {
             return colors;
         }
@@ -434,7 +434,8 @@ namespace RealTimeFaceRecognitionSample
         /// the garbage collector can reclaim the memory that the <see cref="WebCamTextureToMatHelper"/> was occupying.</remarks>
         public void Dispose ()
         {
-            dispose ();
+            if (initDone)
+                dispose ();
 
             colors = null;
         }

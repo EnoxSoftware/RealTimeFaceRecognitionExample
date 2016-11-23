@@ -187,8 +187,47 @@ namespace RealTimeFaceRecognitionSample
         Mat old_prepreprocessedFace;
         double old_time = 0.0d;
 
+        string faceCascadeFilePath;
+        string eyeCascadeFilePath1;
+        string eyeCascadeFilePath2;
+
         // Use this for initialization
         void Start ()
+        {
+            #if UNITY_WEBGL && !UNITY_EDITOR
+            StartCoroutine(getFilePathCoroutine());
+            #else
+            faceCascadeFilePath = Utils.getFilePath (faceCascadeFilename);
+            eyeCascadeFilePath1 = Utils.getFilePath (eyeCascadeFilename1);
+            eyeCascadeFilePath2 = Utils.getFilePath (eyeCascadeFilename2);
+
+            Run();
+            #endif
+        }
+
+        #if UNITY_WEBGL && !UNITY_EDITOR
+        // wait to gets file paths.
+        private IEnumerator getFilePathCoroutine()
+        {
+            var getFilePathAsync_faceCascade_Coroutine = StartCoroutine (Utils.getFilePathAsync (faceCascadeFilename, (result) => {
+                faceCascadeFilePath = result;
+            }));
+            var getFilePathAsync_eyeCascade1_Coroutine = StartCoroutine (Utils.getFilePathAsync (eyeCascadeFilename1, (result) => {
+                eyeCascadeFilePath1 = result;
+            }));
+            var getFilePathAsync_eyeCascade2_Coroutine = StartCoroutine (Utils.getFilePathAsync (eyeCascadeFilename2, (result) => {
+                eyeCascadeFilePath2 = result;
+            }));
+
+            yield return getFilePathAsync_faceCascade_Coroutine;
+            yield return getFilePathAsync_eyeCascade1_Coroutine;
+            yield return getFilePathAsync_eyeCascade2_Coroutine;
+
+            Run();
+        }
+        #endif
+
+        private void Run ()
         {
             if(facerecAlgorithmType == facerecAlgorithmEnumType.Fisherfaces){
                 facerecAlgorithm = "FaceRecognizer.Fisherfaces";
@@ -437,18 +476,18 @@ namespace RealTimeFaceRecognitionSample
 
             if (model != null) {
                 // Cleaning old files.
-                string[] filePaths = Directory.GetFiles (Application.temporaryCachePath);
+                string[] filePaths = Directory.GetFiles (Application.persistentDataPath);
                 foreach (string filePath in filePaths) {
                     File.SetAttributes (filePath, FileAttributes.Normal);
                     File.Delete (filePath);
                 }
 
                 // save the train data.
-                model.save (Application.temporaryCachePath + "/traindata.yml");
+                model.save (Application.persistentDataPath + "/traindata.yml");
 
                 // save the preprocessedfaces.
                 for (int i = 0; i < m_numPersons; ++i) {
-                    Imgcodecs.imwrite (Application.temporaryCachePath + "/preprocessedface" + i + ".jpg", preprocessedFaces [m_latestFaces [i]]);
+                    Imgcodecs.imwrite (Application.persistentDataPath + "/preprocessedface" + i + ".jpg", preprocessedFaces [m_latestFaces [i]]);
                 }
             } else {
                 Debug.Log ("save failure. train data does not exist.");
@@ -478,7 +517,7 @@ namespace RealTimeFaceRecognitionSample
             }
 
             // load the train data.
-            model.load (Application.temporaryCachePath + "/traindata.yml");
+            model.load (Application.persistentDataPath + "/traindata.yml");
 
             int maxLabel = (int)Core.minMaxLoc (model.getLabels ()).maxVal;
 
@@ -494,7 +533,7 @@ namespace RealTimeFaceRecognitionSample
             m_numPersons = maxLabel + 1;
             for (int i = 0; i < m_numPersons; ++i) {
                 m_latestFaces.Add (i);
-                preprocessedFaces.Add (Imgcodecs.imread (Application.temporaryCachePath + "/preprocessedface" + i + ".jpg", 0));
+                preprocessedFaces.Add (Imgcodecs.imread (Application.persistentDataPath + "/preprocessedface" + i + ".jpg", 0));
                 if (preprocessedFaces [i].empty ())
                     preprocessedFaces [i] = new Mat (faceHeight, faceWidth, CvType.CV_8UC1, new Scalar (128));
                 faceLabels.Add (i);
@@ -507,17 +546,17 @@ namespace RealTimeFaceRecognitionSample
         // Load the face and 1 or 2 eye detection XML classifiers.
         private void initDetectors (ref CascadeClassifier faceCascade, ref CascadeClassifier eyeCascade1, ref CascadeClassifier eyeCascade2)
         {
-            faceCascade = new CascadeClassifier (Utils.getFilePath (faceCascadeFilename));
+            faceCascade = new CascadeClassifier (faceCascadeFilePath);
             if (faceCascade.empty ()) {
                 Debug.LogError ("cascade file is not loaded.Please copy from “RealTimeFaceRecognitionSample/StreamingAssets/” to “Assets/StreamingAssets/” folder. ");
             }
 
-            eyeCascade1 = new CascadeClassifier (Utils.getFilePath (eyeCascadeFilename1));
+            eyeCascade1 = new CascadeClassifier (eyeCascadeFilePath1);
             if (eyeCascade1.empty ()) {
                 Debug.LogError ("cascade file is not loaded.Please copy from “RealTimeFaceRecognitionSample/StreamingAssets/” to “Assets/StreamingAssets/” folder. ");
             }
 
-            eyeCascade2 = new CascadeClassifier (Utils.getFilePath (eyeCascadeFilename2));
+            eyeCascade2 = new CascadeClassifier (eyeCascadeFilePath2);
             if (eyeCascade2.empty ()) {
                 Debug.LogError ("cascade file is not loaded.Please copy from “RealTimeFaceRecognitionSample/StreamingAssets/” to “Assets/StreamingAssets/” folder. ");
             }
