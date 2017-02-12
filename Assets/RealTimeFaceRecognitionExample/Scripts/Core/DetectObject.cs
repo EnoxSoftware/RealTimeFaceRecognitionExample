@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Rect = OpenCVForUnity.Rect;
 
-namespace RealTimeFaceRecognitionSample
+namespace RealTimeFaceRecognitionExample
 {
 
     /// <summary>

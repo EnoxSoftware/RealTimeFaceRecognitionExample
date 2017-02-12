@@ -4,9 +4,8 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace RealTimeFaceRecognitionSample
+namespace RealTimeFaceRecognitionExample
 {
-
     /// <summary>
     /// Web cam texture to mat helper.
     /// </summary>
@@ -43,6 +42,11 @@ namespace RealTimeFaceRecognitionSample
         public bool flipHorizontal = false;
 
         /// <summary>
+        /// The timeout frame count.
+        /// </summary>
+        public int timeoutFrameCount = 300;
+
+        /// <summary>
         /// The on inited event.
         /// </summary>
         public UnityEvent OnInitedEvent;
@@ -51,6 +55,11 @@ namespace RealTimeFaceRecognitionSample
         /// The on disposed event.
         /// </summary>
         public UnityEvent OnDisposedEvent;
+
+        /// <summary>
+        /// The on error occurred event.
+        /// </summary>
+        public ErrorUnityEvent OnErrorOccurredEvent;
 
         /// <summary>
         /// The web cam texture.
@@ -92,6 +101,18 @@ namespace RealTimeFaceRecognitionSample
         /// </summary>
         ScreenOrientation screenOrientation = ScreenOrientation.Unknown;
 
+        [System.Serializable]
+        public enum ErrorCode :int
+        {
+            CAMERA_DEVICE_NOT_EXIST = 0,
+            TIMEOUT = 1,
+        }
+
+        [System.Serializable]
+        public class ErrorUnityEvent : UnityEngine.Events.UnityEvent<ErrorCode>
+        {
+            
+        }
 
         // Update is called once per frame
         void Update ()
@@ -115,6 +136,8 @@ namespace RealTimeFaceRecognitionSample
                 OnInitedEvent = new UnityEvent ();
             if (OnDisposedEvent == null)
                 OnDisposedEvent = new UnityEvent ();
+            if (OnErrorOccurredEvent == null)
+                OnErrorOccurredEvent = new ErrorUnityEvent ();
 
             StartCoroutine (init ());
         }
@@ -140,6 +163,8 @@ namespace RealTimeFaceRecognitionSample
                 OnInitedEvent = new UnityEvent ();
             if (OnDisposedEvent == null)
                 OnDisposedEvent = new UnityEvent ();
+            if (OnErrorOccurredEvent == null)
+                OnErrorOccurredEvent = new ErrorUnityEvent ();
 
             StartCoroutine (init ());
         }
@@ -177,7 +202,12 @@ namespace RealTimeFaceRecognitionSample
                     webCamDevice = WebCamTexture.devices [0];
                     webCamTexture = new WebCamTexture (webCamDevice.name, requestWidth, requestHeight);
                 } else {
-                    webCamTexture = new WebCamTexture (requestWidth, requestHeight);
+                    //Debug.Log("Camera device does not exist.");
+                    initWaiting = false;
+
+                    if (OnErrorOccurredEvent != null)
+                        OnErrorOccurredEvent.Invoke (ErrorCode.CAMERA_DEVICE_NOT_EXIST);
+                    yield break;
                 }
             }
 
@@ -186,17 +216,31 @@ namespace RealTimeFaceRecognitionSample
             // Starts the camera
             webCamTexture.Play ();
 
+            int initCount = 0;
+            bool isTimeout = false;
+
             while (true) {
+                if (initCount > timeoutFrameCount) {
+                    isTimeout = true;
+                    break;
+                }
                 // If you want to use webcamTexture.width and webcamTexture.height on iOS, you have to wait until webcamTexture.didUpdateThisFrame == 1, otherwise these two values will be equal to 16. (http://forum.unity3d.com/threads/webcamtexture-and-error-0x0502.123922/)
                 #if UNITY_IOS && !UNITY_EDITOR && (UNITY_4_6_3 || UNITY_4_6_4 || UNITY_5_0_0 || UNITY_5_0_1)
-                if (webCamTexture.width > 16 && webCamTexture.height > 16) {
+                else if (webCamTexture.width > 16 && webCamTexture.height > 16) {
                 #else
-                if (webCamTexture.didUpdateThisFrame) {
-                    #if UNITY_IOS && !UNITY_EDITOR && UNITY_5_2                                    
+                else if (webCamTexture.didUpdateThisFrame) {
+                    #if UNITY_IOS && !UNITY_EDITOR && UNITY_5_2
                     while (webCamTexture.width <= 16) {
+                        if (initCount > timeoutFrameCount) {
+                            isTimeout = true;
+                            break;
+                        }else {
+                            initCount++;
+                        }
                         webCamTexture.GetPixels32 ();
                         yield return new WaitForEndOfFrame ();
-                    } 
+                    }
+                    if (isTimeout) break;
                     #endif
                     #endif
 
@@ -224,8 +268,19 @@ namespace RealTimeFaceRecognitionSample
 
                     break;
                 } else {
+                    initCount++;
                     yield return 0;
                 }
+            }
+
+            if (isTimeout) {
+                //Debug.Log("Init time out.");
+                webCamTexture.Stop ();
+                webCamTexture = null;
+                initWaiting = false;
+
+                if (OnErrorOccurredEvent != null)
+                    OnErrorOccurredEvent.Invoke (ErrorCode.TIMEOUT);
             }
         }
 
@@ -233,7 +288,7 @@ namespace RealTimeFaceRecognitionSample
         /// Ises the inited.
         /// </summary>
         /// <returns><c>true</c>, if inited was ised, <c>false</c> otherwise.</returns>
-        public bool isInited ()
+        public bool IsInited ()
         {
             return initDone;
         }
@@ -269,7 +324,7 @@ namespace RealTimeFaceRecognitionSample
         /// Ises the playing.
         /// </summary>
         /// <returns><c>true</c>, if playing was ised, <c>false</c> otherwise.</returns>
-        public bool isPlaying ()
+        public bool IsPlaying ()
         {
             if (!initDone)
                 return false;
@@ -282,7 +337,7 @@ namespace RealTimeFaceRecognitionSample
         /// <returns>The web cam texture.</returns>
         public WebCamTexture GetWebCamTexture ()
         {
-            return webCamTexture;
+            return (initDone) ? webCamTexture : null;
         }
 
         /// <summary>
@@ -298,7 +353,7 @@ namespace RealTimeFaceRecognitionSample
         /// Dids the update this frame.
         /// </summary>
         /// <returns><c>true</c>, if update this frame was dided, <c>false</c> otherwise.</returns>
-        public bool didUpdateThisFrame ()
+        public bool DidUpdateThisFrame ()
         {
             if (!initDone)
                 return false;
@@ -330,18 +385,41 @@ namespace RealTimeFaceRecognitionSample
 
             Utils.webCamTextureToMat (webCamTexture, rgbaMat, colors);
 
-            int flipCode = int.MinValue;
+            if (rotatedRgbaMat != null) {
 
+                using (Mat transposeRgbaMat = rgbaMat.t ()) {
+                    Core.flip (transposeRgbaMat, rotatedRgbaMat, 1);
+                }
+
+                flipMat (rotatedRgbaMat);
+
+                return rotatedRgbaMat;
+            } else {
+
+                flipMat (rgbaMat);
+
+                return rgbaMat;
+            }
+        }
+
+        /// <summary>
+        /// Flips the mat.
+        /// </summary>
+        /// <param name="mat">Mat.</param>
+        private void flipMat (Mat mat)
+        {
+            int flipCode = int.MinValue;
+                
             if (webCamDevice.isFrontFacing) {
                 if (webCamTexture.videoRotationAngle == 0) {
                     flipCode = 1;
                 } else if (webCamTexture.videoRotationAngle == 90) {
-                    flipCode = 0;
+                    flipCode = 1;
                 }
                 if (webCamTexture.videoRotationAngle == 180) {
                     flipCode = 0;
                 } else if (webCamTexture.videoRotationAngle == 270) {
-                    flipCode = 1;
+                    flipCode = 0;
                 }
             } else {
                 if (webCamTexture.videoRotationAngle == 180) {
@@ -350,7 +428,7 @@ namespace RealTimeFaceRecognitionSample
                     flipCode = -1;
                 }
             }
-
+                
             if (flipVertical) {
                 if (flipCode == int.MinValue) {
                     flipCode = 0;
@@ -362,7 +440,7 @@ namespace RealTimeFaceRecognitionSample
                     flipCode = 1;
                 }
             }
-
+                
             if (flipHorizontal) {
                 if (flipCode == int.MinValue) {
                     flipCode = 1;
@@ -374,20 +452,9 @@ namespace RealTimeFaceRecognitionSample
                     flipCode = 0;
                 }
             }
-
+                
             if (flipCode > int.MinValue) {
-                Core.flip (rgbaMat, rgbaMat, flipCode);
-            }
-
-            if (rotatedRgbaMat != null) {
-
-                using (Mat transposeRgbaMat = rgbaMat.t ()) {
-                    Core.flip (transposeRgbaMat, rotatedRgbaMat, 1);
-                }
-
-                return rotatedRgbaMat;
-            } else {
-                return rgbaMat;
+                Core.flip (mat, mat, flipCode);
             }
         }
 

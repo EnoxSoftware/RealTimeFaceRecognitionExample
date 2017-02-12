@@ -12,15 +12,15 @@ using System.Text;
 using UnityEngine.SceneManagement;
 #endif
 
-namespace RealTimeFaceRecognitionSample
+namespace RealTimeFaceRecognitionExample
 {
     /// <summary>
-    /// Real Time Face Recognition Sample.
+    /// Real Time Face Recognition Example.
     /// Face Detection & Face Recognition from a webcam using Eigenfaces or Fisherfaces.
     /// Code is the rewrite of https://github.com/MasteringOpenCV/code/tree/master/Chapter8_FaceRecognition using the “OpenCV for Unity”.
     /// </summary>
     [RequireComponent (typeof(WebCamTextureToMatHelper))]
-    public class WebCamTextureRealTimeFaceRecognitionSample : MonoBehaviour
+    public class WebCamTextureRealTimeFaceRecognitionExample : MonoBehaviour
     {
 
         /// <summary>
@@ -105,7 +105,7 @@ namespace RealTimeFaceRecognitionSample
         // The Face Recognition algorithm can be one of these and perhaps more, depending on your version of OpenCV, which must be atleast v2.4.1:
         //    "FaceRecognizer.Eigenfaces":  Eigenfaces, also referred to as PCA (Turk and Pentland, 1991).
         //    "FaceRecognizer.Fisherfaces": Fisherfaces, also referred to as LDA (Belhumeur et al, 1997).
-        //    "FaceRecognizer.LBPH":        Local Binary Pattern Histograms (Ahonen et al, 2006). // ...Not implemented in this sample.//
+        //    "FaceRecognizer.LBPH":        Local Binary Pattern Histograms (Ahonen et al, 2006). // ...Not implemented in this example.//
         string facerecAlgorithm = "FaceRecognizer.Fisherfaces";
         //string facerecAlgorithm = "FaceRecognizer.Eigenfaces";
 
@@ -287,7 +287,7 @@ namespace RealTimeFaceRecognitionSample
         void Update ()
         {
 
-            if (webCamTextureToMatHelper.isPlaying () && webCamTextureToMatHelper.didUpdateThisFrame ()) {
+            if (webCamTextureToMatHelper.IsPlaying () && webCamTextureToMatHelper.DidUpdateThisFrame ()) {
 
                 Mat rgbaMat = webCamTextureToMatHelper.GetMat ();
                 Color32[] colors = webCamTextureToMatHelper.GetBufferColors ();
@@ -379,9 +379,9 @@ namespace RealTimeFaceRecognitionSample
         public void OnBackButton ()
         {
             #if UNITY_5_3 || UNITY_5_3_OR_NEWER
-            SceneManager.LoadScene ("RealTimeFaceRecognitionSample");
+            SceneManager.LoadScene ("RealTimeFaceRecognitionExample");
             #else
-            Application.LoadLevel ("RealTimeFaceRecognitionSample");
+            Application.LoadLevel ("RealTimeFaceRecognitionExample");
             #endif
         }
 
@@ -548,17 +548,17 @@ namespace RealTimeFaceRecognitionSample
         {
             faceCascade = new CascadeClassifier (faceCascadeFilePath);
             if (faceCascade.empty ()) {
-                Debug.LogError ("cascade file is not loaded.Please copy from “RealTimeFaceRecognitionSample/StreamingAssets/” to “Assets/StreamingAssets/” folder. ");
+                Debug.LogError ("cascade file is not loaded.Please copy from “RealTimeFaceRecognitionExample/StreamingAssets/” to “Assets/StreamingAssets/” folder. ");
             }
 
             eyeCascade1 = new CascadeClassifier (eyeCascadeFilePath1);
             if (eyeCascade1.empty ()) {
-                Debug.LogError ("cascade file is not loaded.Please copy from “RealTimeFaceRecognitionSample/StreamingAssets/” to “Assets/StreamingAssets/” folder. ");
+                Debug.LogError ("cascade file is not loaded.Please copy from “RealTimeFaceRecognitionExample/StreamingAssets/” to “Assets/StreamingAssets/” folder. ");
             }
 
             eyeCascade2 = new CascadeClassifier (eyeCascadeFilePath2);
             if (eyeCascade2.empty ()) {
-                Debug.LogError ("cascade file is not loaded.Please copy from “RealTimeFaceRecognitionSample/StreamingAssets/” to “Assets/StreamingAssets/” folder. ");
+                Debug.LogError ("cascade file is not loaded.Please copy from “RealTimeFaceRecognitionExample/StreamingAssets/” to “Assets/StreamingAssets/” folder. ");
             }
         }
 

@@ -5,9 +5,9 @@ using System.Collections;
 using UnityEngine.SceneManagement;
 #endif
 
-namespace RealTimeFaceRecognitionSample
+namespace RealTimeFaceRecognitionExample
 {
-    public class RealTimeFaceRecognitionSample : MonoBehaviour
+    public class RealTimeFaceRecognitionExample : MonoBehaviour
     {
 
         // Use this for initialization
@@ -31,12 +31,12 @@ namespace RealTimeFaceRecognitionSample
             #endif
         }
 
-        public void OnWebCamTextureRealTimeFaceRecognitionSample ()
+        public void OnWebCamTextureRealTimeFaceRecognitionExample ()
         {
             #if UNITY_5_3 || UNITY_5_3_OR_NEWER
-			SceneManager.LoadScene ("WebCamTextureRealTimeFaceRecognitionSample");
+            SceneManager.LoadScene ("WebCamTextureRealTimeFaceRecognitionExample");
             #else
-            Application.LoadLevel ("WebCamTextureRealTimeFaceRecognitionSample");
+            Application.LoadLevel ("WebCamTextureRealTimeFaceRecognitionExample");
             #endif
         }
     }

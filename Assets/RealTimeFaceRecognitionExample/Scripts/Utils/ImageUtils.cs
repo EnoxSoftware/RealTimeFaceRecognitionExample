@@ -1,7 +1,7 @@
 ﻿using OpenCVForUnity;
 using Rect = OpenCVForUnity.Rect;
 
-namespace RealTimeFaceRecognitionSample
+namespace RealTimeFaceRecognitionExample
 {
     /// <summary>
     /// ImageUtils

@@ -1,4 +1,4 @@
-RealTime FaceRecognition Sample
+RealTime FaceRecognition Example
 ====================
 
 Overview
@@ -12,13 +12,13 @@ Demo Video
 Demo
 -----
 - WebGL
-<https://enoxsoftware.github.io/RealTimeFaceRecognitionSample/webgl_sample/index.html>
+<https://enoxsoftware.github.io/RealTimeFaceRecognitionExample/webgl_example/index.html>
 - Android
-<https://play.google.com/store/apps/details?id=com.enoxsofrware.realtimefacerecognitionsample>
+<https://play.google.com/store/apps/details?id=com.enoxsofrware.realtimefacerecognitionexample>
 
 Manual
 -----
-[ReadMe.pdf](ReadMe.pdf)
+[ReadMe.pdf](/Assets/RealTimeFaceRecognitionExample/ReadMe.pdf)
 
 
 

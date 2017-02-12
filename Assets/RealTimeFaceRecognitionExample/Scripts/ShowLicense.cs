@@ -5,7 +5,7 @@ using System.Collections;
 using UnityEngine.SceneManagement;
 #endif
 
-namespace RealTimeFaceRecognitionSample
+namespace RealTimeFaceRecognitionExample
 {
     public class ShowLicense : MonoBehaviour
     {
@@ -25,9 +25,9 @@ namespace RealTimeFaceRecognitionSample
         public void OnBackButton()
         {
             #if UNITY_5_3 || UNITY_5_3_OR_NEWER
-			SceneManager.LoadScene ("RealTimeFaceRecognitionSample");
+            SceneManager.LoadScene ("RealTimeFaceRecognitionExample");
             #else
-            Application.LoadLevel("RealTimeFaceRecognitionSample");
+            Application.LoadLevel("RealTimeFaceRecognitionExample");
             #endif
         }
     }

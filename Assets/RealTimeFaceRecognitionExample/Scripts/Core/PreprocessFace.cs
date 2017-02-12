@@ -3,7 +3,7 @@ using System;
 using UnityEngine;
 using Rect = OpenCVForUnity.Rect;
 
-namespace RealTimeFaceRecognitionSample
+namespace RealTimeFaceRecognitionExample
 {
     /// <summary>
     /// Easily preprocess face images, for face recognition.
