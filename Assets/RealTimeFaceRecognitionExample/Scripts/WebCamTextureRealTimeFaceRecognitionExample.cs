@@ -534,7 +534,7 @@ namespace RealTimeFaceRecognitionExample
             for (int i = 0; i < m_numPersons; ++i) {
                 m_latestFaces.Add (i);
                 preprocessedFaces.Add (Imgcodecs.imread (Application.persistentDataPath + "/preprocessedface" + i + ".jpg", 0));
-                if (preprocessedFaces [i].empty ())
+                if (preprocessedFaces [i].total () == 0)
                     preprocessedFaces [i] = new Mat (faceHeight, faceWidth, CvType.CV_8UC1, new Scalar (128));
                 faceLabels.Add (i);
             }
@@ -547,19 +547,19 @@ namespace RealTimeFaceRecognitionExample
         private void initDetectors (ref CascadeClassifier faceCascade, ref CascadeClassifier eyeCascade1, ref CascadeClassifier eyeCascade2)
         {
             faceCascade = new CascadeClassifier (faceCascadeFilePath);
-            if (faceCascade.empty ()) {
-                Debug.LogError ("cascade file is not loaded.Please copy from “RealTimeFaceRecognitionExample/StreamingAssets/” to “Assets/StreamingAssets/” folder. ");
-            }
+//            if (faceCascade.empty ()) {
+//                Debug.LogError ("cascade file is not loaded.Please copy from “RealTimeFaceRecognitionExample/StreamingAssets/” to “Assets/StreamingAssets/” folder. ");
+//            }
 
             eyeCascade1 = new CascadeClassifier (eyeCascadeFilePath1);
-            if (eyeCascade1.empty ()) {
-                Debug.LogError ("cascade file is not loaded.Please copy from “RealTimeFaceRecognitionExample/StreamingAssets/” to “Assets/StreamingAssets/” folder. ");
-            }
+//            if (eyeCascade1.empty ()) {
+//                Debug.LogError ("cascade file is not loaded.Please copy from “RealTimeFaceRecognitionExample/StreamingAssets/” to “Assets/StreamingAssets/” folder. ");
+//            }
 
             eyeCascade2 = new CascadeClassifier (eyeCascadeFilePath2);
-            if (eyeCascade2.empty ()) {
-                Debug.LogError ("cascade file is not loaded.Please copy from “RealTimeFaceRecognitionExample/StreamingAssets/” to “Assets/StreamingAssets/” folder. ");
-            }
+//            if (eyeCascade2.empty ()) {
+//                Debug.LogError ("cascade file is not loaded.Please copy from “RealTimeFaceRecognitionExample/StreamingAssets/” to “Assets/StreamingAssets/” folder. ");
+//            }
         }
 
         // Draw text into an image. Defaults to top-left-justified text, but you can give negative x coords for right-justified text,
@@ -655,7 +655,7 @@ namespace RealTimeFaceRecognitionExample
         // Main loop that runs forever, until the user hits Escape to quit.
         private void recognizeAndTrainUsingWebcam (Mat cameraFrame, CascadeClassifier faceCascade, CascadeClassifier eyeCascade1, CascadeClassifier eyeCascade2)
         {
-            if (cameraFrame != null && cameraFrame.empty ()) {
+            if (cameraFrame != null && cameraFrame.total () == 0) {
                 Debug.LogError ("ERROR: Couldn't grab the next camera frame.");
             }
 
@@ -679,7 +679,7 @@ namespace RealTimeFaceRecognitionExample
 
                 bool gotFaceAndEyes = false;
 
-                if (preprocessedFace != null && !preprocessedFace.empty ())
+                if (preprocessedFace != null && preprocessedFace.total () > 0)
                     gotFaceAndEyes = true;
 
                 // Draw an anti-aliased rectangle around the detected face.
@@ -706,7 +706,7 @@ namespace RealTimeFaceRecognitionExample
                     if (gotFaceAndEyes) {
                         // Check if this face looks somewhat different from the previously collected face.
                         double imageDiff = 10000000000.0d;
-                        if (old_prepreprocessedFace != null && !old_prepreprocessedFace.empty ()) {
+                        if (old_prepreprocessedFace != null && old_prepreprocessedFace.total () > 0) {
                             imageDiff = Recognition.GetSimilarity (preprocessedFace, old_prepreprocessedFace);
                         }
 
@@ -864,7 +864,7 @@ namespace RealTimeFaceRecognitionExample
 
             // Show the current preprocessed face in the top-center of the display.
             cx = (displayedFrame.cols () - faceWidth) / 2;
-            if (prev_prepreprocessedFace != null && !prev_prepreprocessedFace.empty ()) {
+            if (prev_prepreprocessedFace != null && prev_prepreprocessedFace.total () > 0) {
                 // Get a RGBA version of the face, since the output is RGBA color.
                 using (Mat srcRGBA = new Mat (prev_prepreprocessedFace.size (), CvType.CV_8UC4)) {
                     Imgproc.cvtColor (prev_prepreprocessedFace, srcRGBA, Imgproc.COLOR_GRAY2RGBA);
@@ -887,7 +887,7 @@ namespace RealTimeFaceRecognitionExample
                 int index = m_latestFaces [i];
                 if (index >= 0 && index < preprocessedFaces.Count) {
                     Mat srcGray = preprocessedFaces [index];
-                    if (srcGray != null && !srcGray.empty ()) {
+                    if (srcGray != null && srcGray.total () > 0) {
                         // Get a RGBA version of the face, since the output is RGBA color.
                         using (Mat srcRGBA = new Mat (srcGray.size (), CvType.CV_8UC4)) {
                             Imgproc.cvtColor (srcGray, srcRGBA, Imgproc.COLOR_GRAY2RGBA);
@@ -921,7 +921,7 @@ namespace RealTimeFaceRecognitionExample
 
             if (m_mode == MODES.MODE_RECOGNITION) {
                 if (m_debug) {
-                    if (reconstructedFace != null && !reconstructedFace.empty ()) {
+                    if (reconstructedFace != null && reconstructedFace.total () > 0) {
                         cx = (displayedFrame.cols () - faceWidth) / 2;
                         Point rfDebugBottomRight = new Point (cx + faceWidth * 2 + 5, BORDER + faceHeight);
                         Point rfDebugTopLeft = new Point (cx + faceWidth + 5, BORDER);

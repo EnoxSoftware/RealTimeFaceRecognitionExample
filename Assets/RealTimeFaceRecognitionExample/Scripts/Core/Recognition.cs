@@ -126,7 +126,7 @@ namespace RealTimeFaceRecognitionExample
                 Debug.LogError ("Wrong shapes for given matrices. Was size(src) = (" + src.rows () + " " + src.cols () + ") size(W) = (" + W.rows () + " " + W.cols () + ").");
             }
             // make sure mean is correct if not empty
-            if (!mean.empty () && (mean.total () != d)) {
+            if (mean.total () > 0 && (mean.total () != d)) {
                 Debug.LogError ("Wrong mean shape for the given data matrix. Expected " + d + " but was " + mean.total () + ",");
             }
             // create temporary matrices
@@ -134,7 +134,7 @@ namespace RealTimeFaceRecognitionExample
             // make sure you operate on correct type
             src.convertTo (X, W.type ());
             // safe to do, because of above assertion
-            if (!mean.empty ()) {
+            if (mean.total () > 0) {
                 for (int i = 0; i < n; i++) {
                     Mat r_i = X.row (i);
                     Core.subtract (r_i, mean.reshape (1, 1), r_i);
@@ -157,7 +157,7 @@ namespace RealTimeFaceRecognitionExample
                 Debug.LogError ("Wrong shapes for given matrices. Was size(src) = (" + src.rows () + " " + src.cols () + ") size(W) = (" + W.rows () + " " + W.cols () + "),");
             }
             // make sure mean is correct if not empty
-            if (!mean.empty () && (mean.total () != W.rows ())) {
+            if (mean.total () > 0 && (mean.total () != W.rows ())) {
                 Debug.LogError ("Wrong mean shape for the given eigenvector matrix. Expected " + W.cols () + " but was " + mean.total () + ".");
             }
             // initialize temporary matrices
@@ -167,7 +167,7 @@ namespace RealTimeFaceRecognitionExample
             // calculate the reconstruction
             Core.gemm (Y, W, 1.0, new Mat (), 0.0, X, Core.GEMM_2_T);
             // safe to do because of above assertion
-            if (!mean.empty ()) {
+            if (mean.total () > 0) {
                 for (int i = 0; i < n; i++) {
                     Mat r_i = X.row (i);
                     Core.add (r_i, mean.reshape (1, 1), r_i);

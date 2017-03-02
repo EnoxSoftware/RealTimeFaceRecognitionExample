@@ -72,7 +72,7 @@ namespace RealTimeFaceRecognitionExample
             DetectObject.DetectLargestObject (topRightOfFace, eyeCascade1, out rightEyeRect, topRightOfFace.cols ());
 
             // If the eye was not detected, try a different cascade classifier.
-            if (leftEyeRect.width <= 0 && !eyeCascade2.empty ()) {
+            if (leftEyeRect.width <= 0 /*&& !eyeCascade2.empty()*/) {
                 DetectObject.DetectLargestObject (topLeftOfFace, eyeCascade2, out leftEyeRect, topLeftOfFace.cols ());
                 //if (leftEyeRect.width > 0)
                 //    cout << "2nd eye detector LEFT SUCCESS" << endl;
@@ -83,7 +83,7 @@ namespace RealTimeFaceRecognitionExample
             //    cout << "1st eye detector LEFT SUCCESS" << endl;
 
             // If the eye was not detected, try a different cascade classifier.
-            if (rightEyeRect.width <= 0 && !eyeCascade2.empty ()) {
+            if (rightEyeRect.width <= 0 /*&& !eyeCascade2.empty ()*/) {
                 DetectObject.DetectLargestObject (topRightOfFace, eyeCascade2, out rightEyeRect, topRightOfFace.cols ());
                 //if (rightEyeRect.width > 0)
                 //    cout << "2nd eye detector RIGHT SUCCESS" << endl;
