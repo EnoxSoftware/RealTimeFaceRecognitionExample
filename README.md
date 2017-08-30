@@ -3,7 +3,7 @@ RealTime FaceRecognition Example
 
 Overview
 -----
-
+<https://www.assetstore.unity3d.com/en/#!/content/73233>
 
 Demo Video
 -----

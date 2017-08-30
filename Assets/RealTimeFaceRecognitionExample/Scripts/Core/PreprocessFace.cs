@@ -7,7 +7,7 @@ namespace RealTimeFaceRecognitionExample
 {
     /// <summary>
     /// Easily preprocess face images, for face recognition.
-    /// Code is the rewrite of https://github.com/MasteringOpenCV/code/tree/master/Chapter8_FaceRecognition using the “OpenCV for Unity”.
+    /// This code is a rewrite of https://github.com/MasteringOpenCV/code/tree/master/Chapter8_FaceRecognition using "OpenCV for Unity".
     /// </summary>
     public static class PreprocessFace
     {

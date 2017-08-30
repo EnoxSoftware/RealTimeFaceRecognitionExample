@@ -9,7 +9,6 @@ namespace RealTimeFaceRecognitionExample
 {
     public class RealTimeFaceRecognitionExample : MonoBehaviour
     {
-
         // Use this for initialization
         void Start ()
         {
@@ -22,7 +21,7 @@ namespace RealTimeFaceRecognitionExample
 
         }
 
-        public void OnShowLicenseButton ()
+        public void OnShowLicenseButtonClick ()
         {
             #if UNITY_5_3 || UNITY_5_3_OR_NEWER
 			SceneManager.LoadScene ("ShowLicense");
@@ -31,7 +30,7 @@ namespace RealTimeFaceRecognitionExample
             #endif
         }
 
-        public void OnWebCamTextureRealTimeFaceRecognitionExample ()
+        public void OnWebCamTextureRealTimeFaceRecognitionExampleButtonClick ()
         {
             #if UNITY_5_3 || UNITY_5_3_OR_NEWER
             SceneManager.LoadScene ("WebCamTextureRealTimeFaceRecognitionExample");

@@ -7,7 +7,7 @@ namespace RealTimeFaceRecognitionExample
 {
     /// <summary>
     /// Train the face recognition system on a given dataset, and recognize the person from a given image.
-    /// Code is the rewrite of https://github.com/MasteringOpenCV/code/tree/master/Chapter8_FaceRecognition using the “OpenCV for Unity”.
+    /// The code is a rewrite of https://github.com/MasteringOpenCV/code/tree/master/Chapter8_FaceRecognition using "OpenCV for Unity".
     /// </summary>
     public static class Recognition
     {
@@ -23,9 +23,9 @@ namespace RealTimeFaceRecognitionExample
             Debug.Log ("Learning the collected faces using the [" + facerecAlgorithm + "] algorithm ...");
 
             if (facerecAlgorithm == "FaceRecognizer.Fisherfaces") {
-                model = Face.createFisherFaceRecognizer ();
+                model = FisherFaceRecognizer.create ();
             } else if (facerecAlgorithm == "FaceRecognizer.Eigenfaces") {
-                model = Face.createEigenFaceRecognizer ();
+                model = EigenFaceRecognizer.create ();
             }
 
             if (model == null) {

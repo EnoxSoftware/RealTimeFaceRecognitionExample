@@ -8,7 +8,7 @@ namespace RealTimeFaceRecognitionExample
 
     /// <summary>
     /// Easily detect objects such as faces or eyes (using LBP or Haar Cascades).
-    /// Code is the rewrite of https://github.com/MasteringOpenCV/code/tree/master/Chapter8_FaceRecognition using the “OpenCV for Unity”.
+    /// This code is a rewrite of https://github.com/MasteringOpenCV/code/tree/master/Chapter8_FaceRecognition using "OpenCV for Unity".
     /// </summary>
     public static class DetectObject
     {
@@ -21,8 +21,7 @@ namespace RealTimeFaceRecognitionExample
         // Can use Haar cascades or LBP cascades for Face Detection, or even eye, mouth, or car detection.
         // Input is temporarily shrunk to 'scaledWidth' for much faster detection, since 200 is enough to find faces.
         private static void detectObjectsCustom (Mat img, CascadeClassifier cascade, out List<Rect> objects, int scaledWidth, int flags, Size minFeatureSize, float searchScaleFactor, int minNeighbors)
-        {
-            
+        {    
             // If the input image is not grayscale, then convert the RGB or RGBA color image to grayscale.
             if (gray == null)
                 gray = new Mat ();

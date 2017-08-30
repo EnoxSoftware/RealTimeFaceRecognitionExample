@@ -15,14 +15,13 @@ using UnityEngine.SceneManagement;
 namespace RealTimeFaceRecognitionExample
 {
     /// <summary>
-    /// Real Time Face Recognition Example.
-    /// Face Detection & Face Recognition from a webcam using Eigenfaces or Fisherfaces.
-    /// Code is the rewrite of https://github.com/MasteringOpenCV/code/tree/master/Chapter8_FaceRecognition using the “OpenCV for Unity”.
+    /// WebcamTexture Real Time Face Recognition Example
+    /// Detect and Recognize face in a webcam image using Eigenfaces / Fisherfaces Algorithm.
+    /// This code is a rewrite of https://github.com/MasteringOpenCV/code/tree/master/Chapter8_FaceRecognition using "OpenCV for Unity".
     /// </summary>
     [RequireComponent (typeof(WebCamTextureToMatHelper))]
     public class WebCamTextureRealTimeFaceRecognitionExample : MonoBehaviour
     {
-
         /// <summary>
         /// The texture.
         /// </summary>
@@ -191,11 +190,17 @@ namespace RealTimeFaceRecognitionExample
         string eyeCascadeFilePath1;
         string eyeCascadeFilePath2;
 
+        #if UNITY_WEBGL && !UNITY_EDITOR
+        Stack<IEnumerator> coroutines = new Stack<IEnumerator> ();
+        #endif
+
         // Use this for initialization
         void Start ()
         {
             #if UNITY_WEBGL && !UNITY_EDITOR
-            StartCoroutine(getFilePathCoroutine());
+            var getFilePath_Coroutine = GetFilePath ();
+            coroutines.Push (getFilePath_Coroutine);
+            StartCoroutine (getFilePath_Coroutine);
             #else
             faceCascadeFilePath = Utils.getFilePath (faceCascadeFilename);
             eyeCascadeFilePath1 = Utils.getFilePath (eyeCascadeFilename1);
@@ -207,21 +212,27 @@ namespace RealTimeFaceRecognitionExample
 
         #if UNITY_WEBGL && !UNITY_EDITOR
         // wait to gets file paths.
-        private IEnumerator getFilePathCoroutine()
+        private IEnumerator GetFilePath()
         {
-            var getFilePathAsync_faceCascade_Coroutine = StartCoroutine (Utils.getFilePathAsync (faceCascadeFilename, (result) => {
+            var getFilePathAsync_faceCascade_Coroutine = Utils.getFilePathAsync (faceCascadeFilename, (result) => {
                 faceCascadeFilePath = result;
-            }));
-            var getFilePathAsync_eyeCascade1_Coroutine = StartCoroutine (Utils.getFilePathAsync (eyeCascadeFilename1, (result) => {
-                eyeCascadeFilePath1 = result;
-            }));
-            var getFilePathAsync_eyeCascade2_Coroutine = StartCoroutine (Utils.getFilePathAsync (eyeCascadeFilename2, (result) => {
-                eyeCascadeFilePath2 = result;
-            }));
+            });
+            coroutines.Push (getFilePathAsync_faceCascade_Coroutine);
+            yield return StartCoroutine (getFilePathAsync_faceCascade_Coroutine);
 
-            yield return getFilePathAsync_faceCascade_Coroutine;
-            yield return getFilePathAsync_eyeCascade1_Coroutine;
-            yield return getFilePathAsync_eyeCascade2_Coroutine;
+            var getFilePathAsync_eyeCascade1_Coroutine = Utils.getFilePathAsync (eyeCascadeFilename1, (result) => {
+                eyeCascadeFilePath1 = result;
+            });
+            coroutines.Push (getFilePathAsync_eyeCascade1_Coroutine);
+            yield return StartCoroutine (getFilePathAsync_eyeCascade1_Coroutine);
+
+            var getFilePathAsync_eyeCascade2_Coroutine = Utils.getFilePathAsync (eyeCascadeFilename2, (result) => {
+                eyeCascadeFilePath2 = result;
+            });
+            coroutines.Push (getFilePathAsync_eyeCascade2_Coroutine);
+            yield return StartCoroutine (getFilePathAsync_eyeCascade2_Coroutine);
+
+            coroutines.Clear ();
 
             Run();
         }
@@ -282,11 +293,18 @@ namespace RealTimeFaceRecognitionExample
         {
             Debug.Log ("OnWebCamTextureToMatHelperDisposed");
         }
+
+        /// <summary>
+        /// Raises the web cam texture to mat helper error occurred event.
+        /// </summary>
+        /// <param name="errorCode">Error code.</param>
+        public void OnWebCamTextureToMatHelperErrorOccurred(WebCamTextureToMatHelper.ErrorCode errorCode){
+            Debug.Log ("OnWebCamTextureToMatHelperErrorOccurred " + errorCode);
+        }
             
         // Update is called once per frame
         void Update ()
         {
-
             if (webCamTextureToMatHelper.IsPlaying () && webCamTextureToMatHelper.DidUpdateThisFrame ()) {
 
                 Mat rgbaMat = webCamTextureToMatHelper.GetMat ();
@@ -328,9 +346,9 @@ namespace RealTimeFaceRecognitionExample
                 yield return new WaitForSeconds (beforWaitTime);
 
             if (isChangeCamera)
-                webCamTextureToMatHelper.Init (null, webCamTextureToMatHelper.requestWidth, webCamTextureToMatHelper.requestHeight, !webCamTextureToMatHelper.requestIsFrontFacing);
+                webCamTextureToMatHelper.Initialize (null, webCamTextureToMatHelper.requestedWidth, webCamTextureToMatHelper.requestedHeight, !webCamTextureToMatHelper.requestedIsFrontFacing);
             else
-                webCamTextureToMatHelper.Init ();
+                webCamTextureToMatHelper.Initialize ();
 
             if (afterWaitTime > 0)
                 yield return new WaitForSeconds (afterWaitTime);
@@ -339,9 +357,9 @@ namespace RealTimeFaceRecognitionExample
         }
 
         /// <summary>
-        /// Raises the disable event.
+        /// Raises the destroy event.
         /// </summary>
-        void OnDisable ()
+        void OnDestroy ()
         {
             webCamTextureToMatHelper.Dispose ();
 
@@ -371,12 +389,19 @@ namespace RealTimeFaceRecognitionExample
             if (model != null && !model.IsDisposed)
                 model.Dispose ();
 
+            
+            #if UNITY_WEBGL && !UNITY_EDITOR
+            foreach (var coroutine in coroutines) {
+                StopCoroutine (coroutine);
+                ((IDisposable)coroutine).Dispose ();
+            }
+            #endif
         }
 
         /// <summary>
-        /// Raises the back button event.
+        /// Raises the back button click event.
         /// </summary>
-        public void OnBackButton ()
+        public void OnBackButtonClick ()
         {
             #if UNITY_5_3 || UNITY_5_3_OR_NEWER
             SceneManager.LoadScene ("RealTimeFaceRecognitionExample");
@@ -386,17 +411,17 @@ namespace RealTimeFaceRecognitionExample
         }
 
         /// <summary>
-        /// Raises the play button event.
+        /// Raises the play button click event.
         /// </summary>
-        public void OnPlayButton ()
+        public void OnPlayButtonClick ()
         {
             webCamTextureToMatHelper.Play ();
         }
 
         /// <summary>
-        /// Raises the pause button event.
+        /// Raises the pause button click event.
         /// </summary>
-        public void OnPauseButton ()
+        public void OnPauseButtonClick ()
         {
             if (isWaitingWebCameraInit)
                 StopCoroutine (coroutineToWaitWebCameraInit);
@@ -405,9 +430,9 @@ namespace RealTimeFaceRecognitionExample
         }
 
         /// <summary>
-        /// Raises the stop button event.
+        /// Raises the stop button click event.
         /// </summary>
-        public void OnStopButton ()
+        public void OnStopButtonClick ()
         {
             if (isWaitingWebCameraInit)
                 StopCoroutine (coroutineToWaitWebCameraInit);
@@ -416,9 +441,9 @@ namespace RealTimeFaceRecognitionExample
         }
 
         /// <summary>
-        /// Raises the change camera button event.
+        /// Raises the change camera button click event.
         /// </summary>
-        public void OnChangeCameraButton ()
+        public void OnChangeCameraButtonClick ()
         {
             if (isWaitingWebCameraInit)
                 return;
@@ -427,9 +452,9 @@ namespace RealTimeFaceRecognitionExample
         }
 
         /// <summary>
-        /// Raises the add person button event.
+        /// Raises the add person button click event.
         /// </summary>
-        public void OnAddPersonButton ()
+        public void OnAddPersonButtonClick ()
         {
             Debug.Log ("User clicked [Add Person] button when numPersons was " + m_numPersons + ".");
 
@@ -447,9 +472,9 @@ namespace RealTimeFaceRecognitionExample
         }
 
         /// <summary>
-        /// Raises the delete all button event.
+        /// Raises the delete all button click event.
         /// </summary>
-        public void OnDeleteAllButton ()
+        public void OnDeleteAllButtonClick ()
         {
             Debug.Log ("User clicked [Delete All] button.");
             m_mode = MODES.MODE_DELETE_ALL;
@@ -457,9 +482,9 @@ namespace RealTimeFaceRecognitionExample
 
         /*
         /// <summary>
-        /// Raises the show debug toggle event.
+        /// Raises the show debug toggle value changed event.
         /// </summary>
-        public void OnShowDebugToggle()
+        public void OnShowDebugToggleValueChanged()
         {
             Debug.Log("User clicked [Debug] button.");
             m_debug = !m_debug;
@@ -468,9 +493,9 @@ namespace RealTimeFaceRecognitionExample
         */
 
         /// <summary>
-        /// Raises the save button event.
+        /// Raises the save button click event.
         /// </summary>
-        public void OnSaveButton ()
+        public void OnSaveButtonClick ()
         {
             Debug.Log ("User clicked [Save] button.");
 
@@ -483,7 +508,7 @@ namespace RealTimeFaceRecognitionExample
                 }
 
                 // save the train data.
-                model.save (Application.persistentDataPath + "/traindata.yml");
+                model.write (Application.persistentDataPath + "/traindata.yml");
 
                 // save the preprocessedfaces.
                 for (int i = 0; i < m_numPersons; ++i) {
@@ -495,9 +520,9 @@ namespace RealTimeFaceRecognitionExample
         }
 
         /// <summary>
-        /// Raises the load button event.
+        /// Raises the load button click event.
         /// </summary>
-        public void OnLoadButton ()
+        public void OnLoadButtonClick ()
         {
             Debug.Log ("User clicked [Load] button.");
 
@@ -505,9 +530,9 @@ namespace RealTimeFaceRecognitionExample
             dispose ();
 
             if (facerecAlgorithm == "FaceRecognizer.Fisherfaces") {
-                model = Face.createFisherFaceRecognizer ();
+                model = FisherFaceRecognizer.create ();
             } else if (facerecAlgorithm == "FaceRecognizer.Eigenfaces") {
-                model = Face.createEigenFaceRecognizer ();
+                model = EigenFaceRecognizer.create ();
             }
 
             if (model == null) {
@@ -517,7 +542,7 @@ namespace RealTimeFaceRecognitionExample
             }
 
             // load the train data.
-            model.load (Application.persistentDataPath + "/traindata.yml");
+            model.read (Application.persistentDataPath + "/traindata.yml");
 
             int maxLabel = (int)Core.minMaxLoc (model.getLabels ()).maxVal;
 
