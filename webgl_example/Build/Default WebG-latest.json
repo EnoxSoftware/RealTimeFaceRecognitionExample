@@ -1,0 +1,16 @@
+{
+"companyName": "Enox Software",
+"productName": "2017.3.1f1_Mono_RealTimeFaceRecognitionExample",
+"dataUrl": "Default WebG-latest.data.unityweb",
+"wasmCodeUrl": "Default WebG-latest.wasm.code.unityweb",
+"wasmFrameworkUrl": "Default WebG-latest.wasm.framework.unityweb",
+"asmCodeUrl": "Default WebG-latest.asm.code.unityweb",
+"asmMemoryUrl": "Default WebG-latest.asm.memory.unityweb",
+"asmFrameworkUrl": "Default WebG-latest.asm.framework.unityweb",
+"TOTAL_MEMORY": 536870912,
+"graphicsAPI": ["WebGL 2.0", "WebGL 1.0"],
+"webglContextAttributes": {"preserveDrawingBuffer": false},
+"splashScreenStyle": "Dark",
+"backgroundColor": "#231F20",
+"cacheControl": {"dataUrl": "must-revalidate"}
+}
