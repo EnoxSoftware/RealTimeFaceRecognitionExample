@@ -131,14 +131,17 @@ namespace RealTimeFaceRecognitionExample
 
 
         // Cascade Classifier file, used for Face Detection.
-        const string faceCascadeFilename = "lbpcascade_frontalface.xml";     // LBP face detector.
+        const string faceCascadeFilename = "lbpcascade_frontalface.xml";
+        // LBP face detector.
         //const string faceCascadeFilename = "haarcascade_frontalface_alt_tree.xml";  // Haar face detector.
         //const string eyeCascadeFilename1 = "haarcascade_lefteye_2splits.xml";   // Best eye detector for open-or-closed eyes.
         //const string eyeCascadeFilename2 = "haarcascade_righteye_2splits.xml";   // Best eye detector for open-or-closed eyes.
         //const string eyeCascadeFilename1 = "haarcascade_mcs_lefteye.xml";       // Good eye detector for open-or-closed eyes.
         //const string eyeCascadeFilename2 = "haarcascade_mcs_righteye.xml";       // Good eye detector for open-or-closed eyes.
-        const string eyeCascadeFilename1 = "haarcascade_eye.xml";               // Basic eye detector for open eyes only.
-        const string eyeCascadeFilename2 = "haarcascade_eye_tree_eyeglasses.xml"; // Basic eye detector for open eyes if they might wear glasses.
+        const string eyeCascadeFilename1 = "haarcascade_eye.xml";
+        // Basic eye detector for open eyes only.
+        const string eyeCascadeFilename2 = "haarcascade_eye_tree_eyeglasses.xml";
+        // Basic eye detector for open eyes if they might wear glasses.
 
         // Set the desired face dimensions. Note that "getPreprocessedFace()" will return a square face.
         const int faceWidth = 70;
@@ -150,13 +153,18 @@ namespace RealTimeFaceRecognitionExample
         //const int DESIRED_CAMERA_HEIGHT = 480;
 
         // Parameters controlling how often to keep new faces when collecting them. Otherwise, the training set could look to similar to each other!
-        const double CHANGE_IN_IMAGE_FOR_COLLECTION = 0.3d;      // How much the facial image should change before collecting a new face photo for training.
-        const double CHANGE_IN_SECONDS_FOR_COLLECTION = 1.0d;       // How much time must pass before collecting a new face photo for training.
+        const double CHANGE_IN_IMAGE_FOR_COLLECTION = 0.3d;
+        // How much the facial image should change before collecting a new face photo for training.
+        const double CHANGE_IN_SECONDS_FOR_COLLECTION = 1.0d;
+        // How much time must pass before collecting a new face photo for training.
 
-        const string windowName = "WebcamFaceRec";   // Name shown in the GUI window.
-        const int BORDER = 8;  // Border between GUI elements to the edge of the image.
+        const string windowName = "WebcamFaceRec";
+        // Name shown in the GUI window.
+        const int BORDER = 8;
+        // Border between GUI elements to the edge of the image.
 
-        const bool preprocessLeftAndRightSeparately = true;   // Preprocess left & right sides of the face separately, in case there is stronger light on one side.
+        const bool preprocessLeftAndRightSeparately = true;
+        // Preprocess left & right sides of the face separately, in case there is stronger light on one side.
 
         // Set to true if you want to see many windows created, showing various debug info. Set to 0 otherwise.
         bool m_debug = true;
@@ -199,6 +207,8 @@ namespace RealTimeFaceRecognitionExample
         // Use this for initialization
         void Start ()
         {
+            webCamTextureToMatHelper = gameObject.GetComponent<WebCamTextureToMatHelper> ();
+
             #if UNITY_WEBGL && !UNITY_EDITOR
             var getFilePath_Coroutine = GetFilePath ();
             coroutines.Push (getFilePath_Coroutine);
@@ -208,7 +218,7 @@ namespace RealTimeFaceRecognitionExample
             eyeCascadeFilePath1 = Utils.getFilePath (eyeCascadeFilename1);
             eyeCascadeFilePath2 = Utils.getFilePath (eyeCascadeFilename2);
 
-            Run();
+            Run ();
             #endif
         }
 
@@ -242,9 +252,9 @@ namespace RealTimeFaceRecognitionExample
 
         private void Run ()
         {
-            if(facerecAlgorithmType == facerecAlgorithmEnumType.Fisherfaces){
+            if (facerecAlgorithmType == facerecAlgorithmEnumType.Fisherfaces) {
                 facerecAlgorithm = "FaceRecognizer.Fisherfaces";
-            }else if(facerecAlgorithmType == facerecAlgorithmEnumType.Eigenfaces){
+            } else if (facerecAlgorithmType == facerecAlgorithmEnumType.Eigenfaces) {
                 facerecAlgorithm = "FaceRecognizer.Eigenfaces";
             }
 
@@ -253,8 +263,6 @@ namespace RealTimeFaceRecognitionExample
 
             // Since we have already initialized everything, lets start in Detection mode.
             m_mode = MODES.MODE_DETECTION;
-
-            webCamTextureToMatHelper = gameObject.GetComponent<WebCamTextureToMatHelper> ();
 
             coroutineToWaitWebCameraInit = StartCoroutine (waitWebCameraInit (false, 0, 0.5f));
         }
@@ -300,7 +308,8 @@ namespace RealTimeFaceRecognitionExample
         /// Raises the web cam texture to mat helper error occurred event.
         /// </summary>
         /// <param name="errorCode">Error code.</param>
-        public void OnWebCamTextureToMatHelperErrorOccurred(WebCamTextureToMatHelper.ErrorCode errorCode){
+        public void OnWebCamTextureToMatHelperErrorOccurred (WebCamTextureToMatHelper.ErrorCode errorCode)
+        {
             Debug.Log ("OnWebCamTextureToMatHelperErrorOccurred " + errorCode);
         }
             
@@ -515,7 +524,7 @@ namespace RealTimeFaceRecognitionExample
                     if ((directoryInfo.Attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly) {
                         directoryInfo.Attributes = FileAttributes.Directory;
                     }
-                    directoryInfo.Delete(true);
+                    directoryInfo.Delete (true);
                 }
                 Directory.CreateDirectory (saveDirectoryPath);
 
@@ -528,7 +537,7 @@ namespace RealTimeFaceRecognitionExample
                 MatOfInt compressionParams = new MatOfInt(Imgcodecs.CV_IMWRITE_JPEG_QUALITY, 100);
                 #else
                 string format = "png";
-                MatOfInt compressionParams = new MatOfInt(Imgcodecs.CV_IMWRITE_PNG_COMPRESSION, 0);
+                MatOfInt compressionParams = new MatOfInt (Imgcodecs.CV_IMWRITE_PNG_COMPRESSION, 0);
                 #endif
                 for (int i = 0; i < m_numPersons; ++i) {
                     Imgcodecs.imwrite (Path.Combine (saveDirectoryPath, "preprocessedface" + i + "." + format), preprocessedFaces [m_latestFaces [i]], compressionParams);
