@@ -108,6 +108,8 @@ namespace RealTimeFaceRecognitionExample
         string facerecAlgorithm = "FaceRecognizer.Fisherfaces";
         //string facerecAlgorithm = "FaceRecognizer.Eigenfaces";
 
+        const string saveDirectoryName = "RealTimeFaceRecognitionExample";
+
         public enum facerecAlgorithmEnumType
         {
             Fisherfaces,
@@ -499,20 +501,37 @@ namespace RealTimeFaceRecognitionExample
         {
             Debug.Log ("User clicked [Save] button.");
 
+            string saveDirectoryPath = Path.Combine (Application.persistentDataPath, saveDirectoryName);
+
             if (model != null) {
-                // Cleaning old files.
-                string[] filePaths = Directory.GetFiles (Application.persistentDataPath);
-                foreach (string filePath in filePaths) {
-                    File.SetAttributes (filePath, FileAttributes.Normal);
-                    File.Delete (filePath);
+                // Clean up old files.
+                if (Directory.Exists (saveDirectoryPath)) {
+                    DirectoryInfo directoryInfo = new DirectoryInfo (saveDirectoryPath);
+                    foreach (FileInfo fileInfo in directoryInfo.GetFiles()) {
+                        if ((fileInfo.Attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly) {
+                            fileInfo.Attributes = FileAttributes.Normal;
+                        }
+                    }
+                    if ((directoryInfo.Attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly) {
+                        directoryInfo.Attributes = FileAttributes.Directory;
+                    }
+                    directoryInfo.Delete(true);
                 }
+                Directory.CreateDirectory (saveDirectoryPath);
 
                 // save the train data.
-                model.write (Application.persistentDataPath + "/traindata.yml");
+                model.write (Path.Combine (saveDirectoryPath, "traindata.yml"));
 
                 // save the preprocessedfaces.
+                #if UNITY_WEBGL && !UNITY_EDITOR
+                string format = "jpg";
+                MatOfInt compressionParams = new MatOfInt(Imgcodecs.CV_IMWRITE_JPEG_QUALITY, 100);
+                #else
+                string format = "png";
+                MatOfInt compressionParams = new MatOfInt(Imgcodecs.CV_IMWRITE_PNG_COMPRESSION, 0);
+                #endif
                 for (int i = 0; i < m_numPersons; ++i) {
-                    Imgcodecs.imwrite (Application.persistentDataPath + "/preprocessedface" + i + ".jpg", preprocessedFaces [m_latestFaces [i]]);
+                    Imgcodecs.imwrite (Path.Combine (saveDirectoryPath, "preprocessedface" + i + "." + format), preprocessedFaces [m_latestFaces [i]], compressionParams);
                 }
             } else {
                 Debug.Log ("save failure. train data does not exist.");
@@ -525,6 +544,13 @@ namespace RealTimeFaceRecognitionExample
         public void OnLoadButtonClick ()
         {
             Debug.Log ("User clicked [Load] button.");
+
+            string loadDirectoryPath = Path.Combine (Application.persistentDataPath, saveDirectoryName);
+
+            if (!Directory.Exists (loadDirectoryPath)) {
+                Debug.Log ("load failure. saved train data file does not exist.");
+                return;
+            }
 
             // Restart everything!
             dispose ();
@@ -542,11 +568,11 @@ namespace RealTimeFaceRecognitionExample
             }
 
             // load the train data.
-            model.read (Application.persistentDataPath + "/traindata.yml");
+            model.read (Path.Combine (loadDirectoryPath, "traindata.yml"));
 
             int maxLabel = (int)Core.minMaxLoc (model.getLabels ()).maxVal;
 
-            if (maxLabel <= 0) {
+            if (maxLabel < 0) {
                 Debug.Log ("load failure.");
                 model.Dispose ();
                 model = null;
@@ -555,10 +581,15 @@ namespace RealTimeFaceRecognitionExample
             }
 
             // Restore the save data.
+            #if UNITY_WEBGL && !UNITY_EDITOR
+            string format = "jpg";
+            #else
+            string format = "png";
+            #endif
             m_numPersons = maxLabel + 1;
             for (int i = 0; i < m_numPersons; ++i) {
                 m_latestFaces.Add (i);
-                preprocessedFaces.Add (Imgcodecs.imread (Application.persistentDataPath + "/preprocessedface" + i + ".jpg", 0));
+                preprocessedFaces.Add (Imgcodecs.imread (Path.Combine (loadDirectoryPath, "preprocessedface" + i + "." + format), 0));
                 if (preprocessedFaces [i].total () == 0)
                     preprocessedFaces [i] = new Mat (faceHeight, faceWidth, CvType.CV_8UC1, new Scalar (128));
                 faceLabels.Add (i);
