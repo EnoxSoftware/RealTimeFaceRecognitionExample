@@ -3,7 +3,11 @@ RealTime FaceRecognition Example
 
 Overview
 -----
-<https://www.assetstore.unity3d.com/en/#!/content/73233>
+[https://assetstore.unity.com/packages/templates/tutorials/realtime-facerecognition-example-73233](https://assetstore.unity.com/packages/templates/tutorials/realtime-facerecognition-example-73233?aid=1011l4ehR)
+
+Environment
+-----
+[OpenCVForUnity](https://assetstore.unity.com/packages/tools/integration/opencv-for-unity-21088?aid=1011l4ehR)  
 
 Demo Video
 -----
