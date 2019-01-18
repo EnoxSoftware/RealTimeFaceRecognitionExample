@@ -1,7 +1,10 @@
-﻿using OpenCVForUnity;
-using System;
+﻿using System;
 using UnityEngine;
-using Rect = OpenCVForUnity.Rect;
+using OpenCVForUnity.CoreModule;
+using OpenCVForUnity.ObjdetectModule;
+using OpenCVForUnity.ImgprocModule;
+using OpenCVForUnity.UnityUtils;
+using Rect = OpenCVForUnity.CoreModule.Rect;
 
 namespace RealTimeFaceRecognitionExample
 {
@@ -15,11 +18,14 @@ namespace RealTimeFaceRecognitionExample
         static Scalar WHITE = new Scalar (255);
         static Scalar GRAY = new Scalar (128);
 
-        const double DESIRED_LEFT_EYE_X = 0.16d;     // Controls how much of the face is visible after preprocessing.
+        const double DESIRED_LEFT_EYE_X = 0.16d;
+        // Controls how much of the face is visible after preprocessing.
         const double DESIRED_LEFT_EYE_Y = 0.14d;
         const double FACE_ELLIPSE_CY = 0.40d;
-        const double FACE_ELLIPSE_W = 0.50d;         // Should be atleast 0.5
-        const double FACE_ELLIPSE_H = 0.80d;         // Controls how tall the face mask is.
+        const double FACE_ELLIPSE_W = 0.50d;
+        // Should be atleast 0.5
+        const double FACE_ELLIPSE_H = 0.80d;
+        // Controls how tall the face mask is.
 
         // Search for both eyes within the given face image. Returns the eye centers in 'leftEye' and 'rightEye',
         // or sets them to (-1,-1) if each eye was not found. Note that you can pass a 2nd eyeCascade if you
@@ -129,18 +135,18 @@ namespace RealTimeFaceRecognitionExample
 
                 // 2) Equalize the left half and the right half of the face separately.
                 int midX = w / 2;
-                using(Mat leftSide = new Mat (faceImg, new Rect (0, 0, midX, h)))
+                using (Mat leftSide = new Mat (faceImg, new Rect (0, 0, midX, h)))
                 using (Mat rightSide = new Mat (faceImg, new Rect (midX, 0, w - midX, h))) {
                     Imgproc.equalizeHist (leftSide, leftSide);
                     Imgproc.equalizeHist (rightSide, rightSide);
 
                     // 3) Combine the left half and right half and whole face together, so that it has a smooth transition.
-                    byte[] wholeFace_byte = new byte[wholeFace.total() * wholeFace.elemSize()];
-                    Utils.copyFromMat<byte>(wholeFace, wholeFace_byte);
-                    byte[] leftSide_byte = new byte[leftSide.total() * leftSide.elemSize()];
-                    Utils.copyFromMat<byte>(leftSide, leftSide_byte);
-                    byte[] rightSide_byte = new byte[rightSide.total() * rightSide.elemSize()];
-                    Utils.copyFromMat<byte>(rightSide, rightSide_byte);
+                    byte[] wholeFace_byte = new byte[wholeFace.total () * wholeFace.elemSize ()];
+                    Utils.copyFromMat<byte> (wholeFace, wholeFace_byte);
+                    byte[] leftSide_byte = new byte[leftSide.total () * leftSide.elemSize ()];
+                    Utils.copyFromMat<byte> (leftSide, leftSide_byte);
+                    byte[] rightSide_byte = new byte[rightSide.total () * rightSide.elemSize ()];
+                    Utils.copyFromMat<byte> (rightSide, rightSide_byte);
 
                     int leftSide_w = leftSide.cols ();
                     int rightSide_w = rightSide.cols ();
@@ -167,7 +173,7 @@ namespace RealTimeFaceRecognitionExample
                             }
                         }// end x loop
                     }//end y loop
-                    Utils.copyToMat(wholeFace_byte, faceImg);
+                    Utils.copyToMat (wholeFace_byte, faceImg);
                 }
             }
         }
@@ -223,7 +229,7 @@ namespace RealTimeFaceRecognitionExample
                             Imgproc.cvtColor (faceImg, gray, Imgproc.COLOR_RGBA2GRAY);
                         } else {
                             // Access the input image directly, since it is already grayscale.
-                            faceImg.copyTo(gray);
+                            faceImg.copyTo (gray);
                         }
 
                         // Search for the 2 eyes at the full resolution, since eye detection needs max resolution possible!

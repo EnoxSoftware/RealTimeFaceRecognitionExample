@@ -1,7 +1,8 @@
-﻿using OpenCVForUnity;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using Rect = OpenCVForUnity.Rect;
+using OpenCVForUnity.CoreModule;
+using OpenCVForUnity.FaceModule;
+using Rect = OpenCVForUnity.CoreModule.Rect;
 
 namespace RealTimeFaceRecognitionExample
 {

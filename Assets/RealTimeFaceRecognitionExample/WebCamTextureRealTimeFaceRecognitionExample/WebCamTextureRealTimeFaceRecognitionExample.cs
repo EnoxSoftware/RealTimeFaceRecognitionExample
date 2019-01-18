@@ -1,16 +1,19 @@
-﻿using OpenCVForUnity;
-using System;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using Rect = OpenCVForUnity.Rect;
-using System.Collections;
-using System.Text;
-
-#if UNITY_5_3 || UNITY_5_3_OR_NEWER
 using UnityEngine.SceneManagement;
-#endif
+using OpenCVForUnity.ObjdetectModule;
+using OpenCVForUnity.CoreModule;
+using OpenCVForUnity.FaceModule;
+using OpenCVForUnity.ImgprocModule;
+using OpenCVForUnity.ImgcodecsModule;
+using OpenCVForUnity.UnityUtils;
+using OpenCVForUnity.UnityUtils.Helper;
+using Rect = OpenCVForUnity.CoreModule.Rect;
 
 namespace RealTimeFaceRecognitionExample
 {
@@ -201,7 +204,7 @@ namespace RealTimeFaceRecognitionExample
         string eyeCascadeFilePath2;
 
         #if UNITY_WEBGL && !UNITY_EDITOR
-        Stack<IEnumerator> coroutines = new Stack<IEnumerator> ();
+        IEnumerator getFilePath_Coroutine;
         #endif
 
         // Use this for initialization
@@ -210,8 +213,7 @@ namespace RealTimeFaceRecognitionExample
             webCamTextureToMatHelper = gameObject.GetComponent<WebCamTextureToMatHelper> ();
 
             #if UNITY_WEBGL && !UNITY_EDITOR
-            var getFilePath_Coroutine = GetFilePath ();
-            coroutines.Push (getFilePath_Coroutine);
+            getFilePath_Coroutine = GetFilePath ();
             StartCoroutine (getFilePath_Coroutine);
             #else
             faceCascadeFilePath = Utils.getFilePath (faceCascadeFilename);
@@ -229,22 +231,19 @@ namespace RealTimeFaceRecognitionExample
             var getFilePathAsync_faceCascade_Coroutine = Utils.getFilePathAsync (faceCascadeFilename, (result) => {
                 faceCascadeFilePath = result;
             });
-            coroutines.Push (getFilePathAsync_faceCascade_Coroutine);
-            yield return StartCoroutine (getFilePathAsync_faceCascade_Coroutine);
+            yield return getFilePathAsync_faceCascade_Coroutine;
 
             var getFilePathAsync_eyeCascade1_Coroutine = Utils.getFilePathAsync (eyeCascadeFilename1, (result) => {
                 eyeCascadeFilePath1 = result;
             });
-            coroutines.Push (getFilePathAsync_eyeCascade1_Coroutine);
-            yield return StartCoroutine (getFilePathAsync_eyeCascade1_Coroutine);
+            yield return getFilePathAsync_eyeCascade1_Coroutine;
 
             var getFilePathAsync_eyeCascade2_Coroutine = Utils.getFilePathAsync (eyeCascadeFilename2, (result) => {
                 eyeCascadeFilePath2 = result;
             });
-            coroutines.Push (getFilePathAsync_eyeCascade2_Coroutine);
-            yield return StartCoroutine (getFilePathAsync_eyeCascade2_Coroutine);
+            yield return getFilePathAsync_eyeCascade2_Coroutine;
 
-            coroutines.Clear ();
+            getFilePath_Coroutine = null;
 
             Run();
         }
@@ -327,7 +326,7 @@ namespace RealTimeFaceRecognitionExample
                         recognizeAndTrainUsingWebcam (rgbaMat, faceCascade, eyeCascade1, eyeCascade2);
                     }
 
-                    OpenCVForUnity.Utils.matToTexture2D (rgbaMat, texture, colors);
+                    Utils.matToTexture2D (rgbaMat, texture, colors);
                 }
             }
 
@@ -402,9 +401,9 @@ namespace RealTimeFaceRecognitionExample
 
             
             #if UNITY_WEBGL && !UNITY_EDITOR
-            foreach (var coroutine in coroutines) {
-                StopCoroutine (coroutine);
-                ((IDisposable)coroutine).Dispose ();
+            if (getFilePath_Coroutine != null) {
+                StopCoroutine (getFilePath_Coroutine);
+                ((IDisposable)getFilePath_Coroutine).Dispose ();
             }
             #endif
         }
@@ -414,11 +413,7 @@ namespace RealTimeFaceRecognitionExample
         /// </summary>
         public void OnBackButtonClick ()
         {
-            #if UNITY_5_3 || UNITY_5_3_OR_NEWER
             SceneManager.LoadScene ("RealTimeFaceRecognitionExample");
-            #else
-            Application.LoadLevel ("RealTimeFaceRecognitionExample");
-            #endif
         }
 
         /// <summary>
@@ -534,10 +529,10 @@ namespace RealTimeFaceRecognitionExample
                 // save the preprocessedfaces.
                 #if UNITY_WEBGL && !UNITY_EDITOR
                 string format = "jpg";
-                MatOfInt compressionParams = new MatOfInt(Imgcodecs.CV_IMWRITE_JPEG_QUALITY, 100);
+                MatOfInt compressionParams = new MatOfInt(Imgcodecs.IMWRITE_JPEG_QUALITY, 100);
                 #else
                 string format = "png";
-                MatOfInt compressionParams = new MatOfInt (Imgcodecs.CV_IMWRITE_PNG_COMPRESSION, 0);
+                MatOfInt compressionParams = new MatOfInt (Imgcodecs.IMWRITE_PNG_COMPRESSION, 0);
                 #endif
                 for (int i = 0; i < m_numPersons; ++i) {
                     Imgcodecs.imwrite (Path.Combine (saveDirectoryPath, "preprocessedface" + i + "." + format), preprocessedFaces [m_latestFaces [i]], compressionParams);
@@ -630,7 +625,7 @@ namespace RealTimeFaceRecognitionExample
         // Draw text into an image. Defaults to top-left-justified text, but you can give negative x coords for right-justified text,
         // and/or negative y coords for bottom-justified text.
         // Returns the bounding rect around the drawn text.
-        private Rect drawString (Mat img, string text, Point coord, Scalar color, float fontScale = 0.6f, int thickness = 1, int fontFace = Core.FONT_HERSHEY_COMPLEX)
+        private Rect drawString (Mat img, string text, Point coord, Scalar color, float fontScale = 0.6f, int thickness = 1, int fontFace = Imgproc.FONT_HERSHEY_COMPLEX)
         {
             // Get the text size & baseline.
             int[] baseline = new int[1] { 0 };
