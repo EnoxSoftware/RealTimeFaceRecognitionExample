@@ -845,6 +845,10 @@ namespace RealTimeFaceRecognitionExample
                         // Generate a face approximation by back-projecting the eigenvectors & eigenvalues.
                         reconstructedFace = Recognition.ReconstructFace (model, preprocessedFace);
 
+                        // If the reconstructed face is incorrect, return to COLLECT FACES mode.
+                        if (reconstructedFace.empty())
+                            m_mode = MODES.MODE_COLLECT_FACES;
+
                         // Verify whether the reconstructed face looks like the preprocessed face, otherwise it is probably an unknown person.
                         double similarity = Recognition.GetSimilarity (preprocessedFace, reconstructedFace);
                         double confidence = 0.0d;

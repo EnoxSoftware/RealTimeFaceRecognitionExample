@@ -5,6 +5,7 @@ using OpenCVForUnity.ObjdetectModule;
 using OpenCVForUnity.ImgprocModule;
 using OpenCVForUnity.UnityUtils;
 using Rect = OpenCVForUnity.CoreModule.Rect;
+using OpenCVForUnity.UtilsModule;
 
 namespace RealTimeFaceRecognitionExample
 {
@@ -142,11 +143,11 @@ namespace RealTimeFaceRecognitionExample
 
                     // 3) Combine the left half and right half and whole face together, so that it has a smooth transition.
                     byte[] wholeFace_byte = new byte[wholeFace.total () * wholeFace.elemSize ()];
-                    Utils.copyFromMat<byte> (wholeFace, wholeFace_byte);
+                    MatUtils.copyFromMat<byte> (wholeFace, wholeFace_byte);
                     byte[] leftSide_byte = new byte[leftSide.total () * leftSide.elemSize ()];
-                    Utils.copyFromMat<byte> (leftSide, leftSide_byte);
+                    MatUtils.copyFromMat<byte> (leftSide, leftSide_byte);
                     byte[] rightSide_byte = new byte[rightSide.total () * rightSide.elemSize ()];
-                    Utils.copyFromMat<byte> (rightSide, rightSide_byte);
+                    MatUtils.copyFromMat<byte> (rightSide, rightSide_byte);
 
                     int leftSide_w = leftSide.cols ();
                     int rightSide_w = rightSide.cols ();
@@ -173,7 +174,7 @@ namespace RealTimeFaceRecognitionExample
                             }
                         }// end x loop
                     }//end y loop
-                    Utils.copyToMat (wholeFace_byte, faceImg);
+                    MatUtils.copyToMat (wholeFace_byte, faceImg);
                 }
             }
         }
