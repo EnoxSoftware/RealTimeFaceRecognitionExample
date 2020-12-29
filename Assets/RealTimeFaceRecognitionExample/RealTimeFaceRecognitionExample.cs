@@ -1,8 +1,7 @@
-﻿using UnityEngine;
+﻿using OpenCVForUnity.CoreModule;
+using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using System.Collections;
-using OpenCVForUnity.CoreModule;
 
 namespace RealTimeFaceRecognitionExample
 {
@@ -17,63 +16,63 @@ namespace RealTimeFaceRecognitionExample
         static float verticalNormalizedPosition = 1f;
 
         // Use this for initialization
-        void Start ()
+        void Start()
         {
             exampleTitle.text = "RealTimeFaceRecognition Example " + Application.version;
 
-            versionInfo.text = Core.NATIVE_LIBRARY_NAME + " " + OpenCVForUnity.UnityUtils.Utils.getVersion () + " (" + Core.VERSION + ")";
+            versionInfo.text = Core.NATIVE_LIBRARY_NAME + " " + OpenCVForUnity.UnityUtils.Utils.getVersion() + " (" + Core.VERSION + ")";
             versionInfo.text += " / UnityEditor " + Application.unityVersion;
             versionInfo.text += " / ";
 
-            #if UNITY_EDITOR
+#if UNITY_EDITOR
             versionInfo.text += "Editor";
-            #elif UNITY_STANDALONE_WIN
+#elif UNITY_STANDALONE_WIN
             versionInfo.text += "Windows";
-            #elif UNITY_STANDALONE_OSX
+#elif UNITY_STANDALONE_OSX
             versionInfo.text += "Mac OSX";
-            #elif UNITY_STANDALONE_LINUX
+#elif UNITY_STANDALONE_LINUX
             versionInfo.text += "Linux";
-            #elif UNITY_ANDROID
+#elif UNITY_ANDROID
             versionInfo.text += "Android";
-            #elif UNITY_IOS
+#elif UNITY_IOS
             versionInfo.text += "iOS";
-            #elif UNITY_WSA
+#elif UNITY_WSA
             versionInfo.text += "WSA";
-            #elif UNITY_WEBGL
+#elif UNITY_WEBGL
             versionInfo.text += "WebGL";
-            #endif
+#endif
             versionInfo.text += " ";
-            #if ENABLE_MONO
+#if ENABLE_MONO
             versionInfo.text += "Mono";
-            #elif ENABLE_IL2CPP
+#elif ENABLE_IL2CPP
             versionInfo.text += "IL2CPP";
-            #elif ENABLE_DOTNET
+#elif ENABLE_DOTNET
             versionInfo.text += ".NET";
-            #endif
+#endif
 
             scrollRect.verticalNormalizedPosition = verticalNormalizedPosition;
         }
 
         // Update is called once per frame
-        void Update ()
+        void Update()
         {
 
         }
 
-        public void OnScrollRectValueChanged ()
+        public void OnScrollRectValueChanged()
         {
             verticalNormalizedPosition = scrollRect.verticalNormalizedPosition;
         }
 
 
-        public void OnShowLicenseButtonClick ()
+        public void OnShowLicenseButtonClick()
         {
-            SceneManager.LoadScene ("ShowLicense");
+            SceneManager.LoadScene("ShowLicense");
         }
 
-        public void OnWebCamTextureRealTimeFaceRecognitionExampleButtonClick ()
+        public void OnWebCamTextureRealTimeFaceRecognitionExampleButtonClick()
         {
-            SceneManager.LoadScene ("WebCamTextureRealTimeFaceRecognitionExample");
+            SceneManager.LoadScene("WebCamTextureRealTimeFaceRecognitionExample");
         }
     }
 }
