@@ -1,4 +1,4 @@
-﻿using OpenCVForUnity.CoreModule;
+using OpenCVForUnity.CoreModule;
 using OpenCVForUnity.FaceModule;
 using System.Collections.Generic;
 using UnityEngine;
@@ -101,7 +101,7 @@ namespace RealTimeFaceRecognitionExample
             }
             catch (CvException e)
             {
-                Debug.Log("WARNING: Missing FaceRecognizer properties." + e);
+                //Debug.Log("WARNING: Missing FaceRecognizer properties." + e);
                 return new Mat();
             }
         }
@@ -134,12 +134,14 @@ namespace RealTimeFaceRecognitionExample
             // make sure the data has the correct shape
             if (W.rows() != d)
             {
-                Debug.LogError("Wrong shapes for given matrices. Was size(src) = (" + src.rows() + " " + src.cols() + ") size(W) = (" + W.rows() + " " + W.cols() + ").");
+                string error_message = string.Format("Wrong shapes for given matrices. Was size(src) = ({0},{1}), size(W) = ({2},{3}).", src.rows(), src.cols(), W.rows(), W.cols());
+                throw new CvException(error_message);
             }
             // make sure mean is correct if not empty
             if (mean.total() > 0 && (mean.total() != d))
             {
-                Debug.LogError("Wrong mean shape for the given data matrix. Expected " + d + " but was " + mean.total() + ",");
+                string error_message = string.Format("Wrong mean shape for the given data matrix. Expected {0}, but was {1}.", d, mean.total());
+                throw new CvException(error_message);
             }
             // create temporary matrices
             Mat X = new Mat(), Y = new Mat();
@@ -169,12 +171,14 @@ namespace RealTimeFaceRecognitionExample
             // make sure the data has the correct shape
             if (W.cols() != d)
             {
-                Debug.LogError("Wrong shapes for given matrices. Was size(src) = (" + src.rows() + " " + src.cols() + ") size(W) = (" + W.rows() + " " + W.cols() + "),");
+                string error_message = string.Format("Wrong shapes for given matrices. Was size(src) = ({0},{1}), size(W) = ({2},{3}).", src.rows(), src.cols(), W.rows(), W.cols());
+                throw new CvException(error_message);
             }
             // make sure mean is correct if not empty
             if (mean.total() > 0 && (mean.total() != W.rows()))
             {
-                Debug.LogError("Wrong mean shape for the given eigenvector matrix. Expected " + W.cols() + " but was " + mean.total() + ".");
+                string error_message = string.Format("Wrong mean shape for the given eigenvector matrix. Expected {0}, but was {1}.", W.cols(), mean.total());
+                throw new CvException(error_message);
             }
             // initialize temporary matrices
             Mat X = new Mat(), Y = new Mat();
