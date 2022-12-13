@@ -134,16 +134,16 @@ namespace RealTimeFaceRecognitionExample
 
 
         // Cascade Classifier file, used for Face Detection.
-        const string faceCascadeFilename = "lbpcascade_frontalface.xml";
+        const string faceCascadeFilename = "RealTimeFaceRecognitionExample/lbpcascade_frontalface.xml";
         // LBP face detector.
-        //const string faceCascadeFilename = "haarcascade_frontalface_alt_tree.xml";  // Haar face detector.
-        //const string eyeCascadeFilename1 = "haarcascade_lefteye_2splits.xml";   // Best eye detector for open-or-closed eyes.
-        //const string eyeCascadeFilename2 = "haarcascade_righteye_2splits.xml";   // Best eye detector for open-or-closed eyes.
-        //const string eyeCascadeFilename1 = "haarcascade_mcs_lefteye.xml";       // Good eye detector for open-or-closed eyes.
-        //const string eyeCascadeFilename2 = "haarcascade_mcs_righteye.xml";       // Good eye detector for open-or-closed eyes.
-        const string eyeCascadeFilename1 = "haarcascade_eye.xml";
+        //const string faceCascadeFilename = "RealTimeFaceRecognitionExample/haarcascade_frontalface_alt_tree.xml";  // Haar face detector.
+        //const string eyeCascadeFilename1 = "RealTimeFaceRecognitionExample/haarcascade_lefteye_2splits.xml";   // Best eye detector for open-or-closed eyes.
+        //const string eyeCascadeFilename2 = "RealTimeFaceRecognitionExample/haarcascade_righteye_2splits.xml";   // Best eye detector for open-or-closed eyes.
+        //const string eyeCascadeFilename1 = "RealTimeFaceRecognitionExample/haarcascade_mcs_lefteye.xml";       // Good eye detector for open-or-closed eyes.
+        //const string eyeCascadeFilename2 = "RealTimeFaceRecognitionExample/haarcascade_mcs_righteye.xml";       // Good eye detector for open-or-closed eyes.
+        const string eyeCascadeFilename1 = "RealTimeFaceRecognitionExample/haarcascade_eye.xml";
         // Basic eye detector for open eyes only.
-        const string eyeCascadeFilename2 = "haarcascade_eye_tree_eyeglasses.xml";
+        const string eyeCascadeFilename2 = "RealTimeFaceRecognitionExample/haarcascade_eye_tree_eyeglasses.xml";
         // Basic eye detector for open eyes if they might wear glasses.
 
         // Set the desired face dimensions. Note that "getPreprocessedFace()" will return a square face.
@@ -640,19 +640,19 @@ namespace RealTimeFaceRecognitionExample
             faceCascade = new CascadeClassifier(faceCascadeFilePath);
             //if (faceCascade.empty())
             //{
-            //    Debug.LogError("cascade file is not loaded.Please copy from “RealTimeFaceRecognitionExample/StreamingAssets/” to “Assets/StreamingAssets/” folder. ");
+            //    Debug.LogError("cascade file is not loaded. The file must exist in the folder “Assets/StreamingAssets/RealTimeFaceRecognitionExample/”.");
             //}
 
             eyeCascade1 = new CascadeClassifier(eyeCascadeFilePath1);
             //if (eyeCascade1.empty())
             //{
-            //    Debug.LogError("cascade file is not loaded.Please copy from “RealTimeFaceRecognitionExample/StreamingAssets/” to “Assets/StreamingAssets/” folder. ");
+            //    Debug.LogError("cascade file is not loaded. The file must exist in the folder “Assets/StreamingAssets/RealTimeFaceRecognitionExample/”.");
             //}
 
             eyeCascade2 = new CascadeClassifier(eyeCascadeFilePath2);
             //if (eyeCascade2.empty())
             //{
-            //    Debug.LogError("cascade file is not loaded.Please copy from “RealTimeFaceRecognitionExample/StreamingAssets/” to “Assets/StreamingAssets/” folder. ");
+            //    Debug.LogError("cascade file is not loaded. The file must exist in the folder “Assets/StreamingAssets/RealTimeFaceRecognitionExample/”.");
             //}
         }
 
