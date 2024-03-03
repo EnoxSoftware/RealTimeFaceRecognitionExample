@@ -354,7 +354,7 @@ namespace RealTimeFaceRecognitionExample
 
                 Vector2 pixelUV = hit.textureCoord;
 
-                _onMouseUP((int)(texture.width * pixelUV.x), (int)(texture.height * (1 - pixelUV.y)));
+                if(texture != null)_onMouseUP((int)(texture.width * pixelUV.x), (int)(texture.height * (1 - pixelUV.y)));
             }
         }
 
