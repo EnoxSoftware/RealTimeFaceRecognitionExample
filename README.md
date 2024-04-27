@@ -15,10 +15,8 @@ Demo Video
 
 Demo
 -----
-- WebGL
-<https://enoxsoftware.github.io/RealTimeFaceRecognitionExample/webgl_example/index.html>
-- Android
-<https://github.com/EnoxSoftware/RealTimeFaceRecognitionExample/releases>
+- WebGL (simd) <https://enoxsoftware.github.io/RealTimeFaceRecognitionExample/webgl_example/index.html>
+- Android <https://github.com/EnoxSoftware/RealTimeFaceRecognitionExample/releases>
 
 Manual
 -----
