@@ -70,9 +70,9 @@ namespace RealTimeFaceRecognitionExample
             SceneManager.LoadScene("ShowLicense");
         }
 
-        public void OnWebCamTextureRealTimeFaceRecognitionExampleButtonClick()
+        public void OnMultiSourceRealTimeFaceRecognitionExampleButtonClick()
         {
-            SceneManager.LoadScene("WebCamTextureRealTimeFaceRecognitionExample");
+            SceneManager.LoadScene("MultiSourceRealTimeFaceRecognitionExample");
         }
     }
 }

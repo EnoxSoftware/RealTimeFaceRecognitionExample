@@ -10,6 +10,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
@@ -18,12 +19,12 @@ using Rect = OpenCVForUnity.CoreModule.Rect;
 namespace RealTimeFaceRecognitionExample
 {
     /// <summary>
-    /// WebcamTexture Real Time Face Recognition Example
+    /// MultiSource Real Time Face Recognition Example
     /// Detect and Recognize face in a webcam image using Eigenfaces / Fisherfaces Algorithm.
     /// This code is a rewrite of https://github.com/MasteringOpenCV/code/tree/master/Chapter8_FaceRecognition using "OpenCV for Unity".
     /// </summary>
-    [RequireComponent(typeof(WebCamTextureToMatHelper))]
-    public class WebCamTextureRealTimeFaceRecognitionExample : MonoBehaviour
+    [RequireComponent(typeof(MultiSource2MatHelper))]
+    public class MultiSourceRealTimeFaceRecognitionExample : MonoBehaviour
     {
         /// <summary>
         /// The texture.
@@ -31,9 +32,9 @@ namespace RealTimeFaceRecognitionExample
         Texture2D texture;
 
         /// <summary>
-        /// The web cam texture to mat helper.
+        /// The multi source to mat helper.
         /// </summary>
-        WebCamTextureToMatHelper webCamTextureToMatHelper;
+        MultiSource2MatHelper multiSource2MatHelper;
 
         /// <summary>
         /// The face cascade.
@@ -49,16 +50,6 @@ namespace RealTimeFaceRecognitionExample
         /// The eye cascade2.
         /// </summary>
         CascadeClassifier eyeCascade2;
-
-        /// <summary>
-        /// The waiting flag of the web camera initialization.
-        /// </summary>
-        bool isWaitingWebCameraInit = false;
-
-        /// <summary>
-        /// The coroutine to wait for the initialization of the web camera.
-        /// </summary>
-        Coroutine coroutineToWaitWebCameraInit;
 
         /// <summary>
         /// The old processing time.
@@ -109,6 +100,7 @@ namespace RealTimeFaceRecognitionExample
         //    "FaceRecognizer.Fisherfaces": Fisherfaces, also referred to as LDA (Belhumeur et al, 1997).
         //    "FaceRecognizer.LBPH":        Local Binary Pattern Histograms (Ahonen et al, 2006). // ...Not implemented in this example.//
         string facerecAlgorithm = "FaceRecognizer.Fisherfaces";
+        // or
         //string facerecAlgorithm = "FaceRecognizer.Eigenfaces";
 
         const string saveDirectoryName = "RealTimeFaceRecognitionExample";
@@ -134,17 +126,20 @@ namespace RealTimeFaceRecognitionExample
 
 
         // Cascade Classifier file, used for Face Detection.
-        const string faceCascadeFilename = "RealTimeFaceRecognitionExample/lbpcascade_frontalface.xml";
-        // LBP face detector.
-        //const string faceCascadeFilename = "RealTimeFaceRecognitionExample/haarcascade_frontalface_alt_tree.xml";  // Haar face detector.
-        //const string eyeCascadeFilename1 = "RealTimeFaceRecognitionExample/haarcascade_lefteye_2splits.xml";   // Best eye detector for open-or-closed eyes.
-        //const string eyeCascadeFilename2 = "RealTimeFaceRecognitionExample/haarcascade_righteye_2splits.xml";   // Best eye detector for open-or-closed eyes.
-        //const string eyeCascadeFilename1 = "RealTimeFaceRecognitionExample/haarcascade_mcs_lefteye.xml";       // Good eye detector for open-or-closed eyes.
-        //const string eyeCascadeFilename2 = "RealTimeFaceRecognitionExample/haarcascade_mcs_righteye.xml";       // Good eye detector for open-or-closed eyes.
-        const string eyeCascadeFilename1 = "RealTimeFaceRecognitionExample/haarcascade_eye.xml";
-        // Basic eye detector for open eyes only.
-        const string eyeCascadeFilename2 = "RealTimeFaceRecognitionExample/haarcascade_eye_tree_eyeglasses.xml";
-        // Basic eye detector for open eyes if they might wear glasses.
+        const string faceCascadeFilename = "RealTimeFaceRecognitionExample/lbpcascade_frontalface.xml"; // LBP face detector.
+        // or
+        //const string faceCascadeFilename = "RealTimeFaceRecognitionExample/haarcascade_frontalface_alt.xml"; // Haar face detector.
+        // or
+        //const string faceCascadeFilename = "RealTimeFaceRecognitionExample/haarcascade_frontalface_alt_tree.xml"; // Haar face detector.
+
+        //const string eyeCascadeFilename1 = "RealTimeFaceRecognitionExample/haarcascade_lefteye_2splits.xml"; // Best eye detector for open-or-closed eyes.
+        //const string eyeCascadeFilename2 = "RealTimeFaceRecognitionExample/haarcascade_righteye_2splits.xml"; // Best eye detector for open-or-closed eyes.
+        // or
+        const string eyeCascadeFilename1 = "RealTimeFaceRecognitionExample/haarcascade_mcs_lefteye.xml"; // Good eye detector for open-or-closed eyes.
+        const string eyeCascadeFilename2 = "RealTimeFaceRecognitionExample/haarcascade_mcs_righteye.xml"; // Good eye detector for open-or-closed eyes.
+        // or
+        //const string eyeCascadeFilename1 = "RealTimeFaceRecognitionExample/haarcascade_eye.xml"; // Basic eye detector for open eyes only.
+        //const string eyeCascadeFilename2 = "RealTimeFaceRecognitionExample/haarcascade_eye_tree_eyeglasses.xml"; // Basic eye detector for open eyes if they might wear glasses.
 
         // Set the desired face dimensions. Note that "getPreprocessedFace()" will return a square face.
         const int faceWidth = 70;
@@ -156,18 +151,14 @@ namespace RealTimeFaceRecognitionExample
         //const int DESIRED_CAMERA_HEIGHT = 480;
 
         // Parameters controlling how often to keep new faces when collecting them. Otherwise, the training set could look to similar to each other!
-        const double CHANGE_IN_IMAGE_FOR_COLLECTION = 0.3d;
-        // How much the facial image should change before collecting a new face photo for training.
-        const double CHANGE_IN_SECONDS_FOR_COLLECTION = 1.0d;
-        // How much time must pass before collecting a new face photo for training.
+        const double CHANGE_IN_IMAGE_FOR_COLLECTION = 0.3d; // How much the facial image should change before collecting a new face photo for training.
+        const double CHANGE_IN_SECONDS_FOR_COLLECTION = 1.0d; // How much time must pass before collecting a new face photo for training.
 
         const string windowName = "WebcamFaceRec";
         // Name shown in the GUI window.
-        const int BORDER = 8;
-        // Border between GUI elements to the edge of the image.
+        const int BORDER = 8; // Border between GUI elements to the edge of the image.
 
-        const bool preprocessLeftAndRightSeparately = true;
-        // Preprocess left & right sides of the face separately, in case there is stronger light on one side.
+        const bool preprocessLeftAndRightSeparately = true; // Preprocess left & right sides of the face separately, in case there is stronger light on one side.
 
         // Set to true if you want to see many windows created, showing various debug info. Set to 0 otherwise.
         bool m_debug = true;
@@ -203,54 +194,37 @@ namespace RealTimeFaceRecognitionExample
         string eyeCascadeFilePath1;
         string eyeCascadeFilePath2;
 
-#if UNITY_WEBGL
-        IEnumerator getFilePath_Coroutine;
-#endif
+        /// <summary>
+        /// The FPS monitor.
+        /// </summary>
+        FpsMonitor fpsMonitor;
+
+        /// <summary>
+        /// The CancellationTokenSource.
+        /// </summary>
+        CancellationTokenSource cts = new CancellationTokenSource();
 
         // Use this for initialization
-        void Start()
+        async void Start()
         {
-            webCamTextureToMatHelper = gameObject.GetComponent<WebCamTextureToMatHelper>();
+            fpsMonitor = GetComponent<FpsMonitor>();
 
-#if UNITY_WEBGL
-            getFilePath_Coroutine = GetFilePath();
-            StartCoroutine(getFilePath_Coroutine);
-#else
-            faceCascadeFilePath = Utils.getFilePath(faceCascadeFilename);
-            eyeCascadeFilePath1 = Utils.getFilePath(eyeCascadeFilename1);
-            eyeCascadeFilePath2 = Utils.getFilePath(eyeCascadeFilename2);
+            multiSource2MatHelper = gameObject.GetComponent<MultiSource2MatHelper>();
+            multiSource2MatHelper.outputColorFormat = Source2MatHelperColorFormat.RGBA;
 
-            Run();
-#endif
-        }
+            // Asynchronously retrieves the readable file path from the StreamingAssets directory.
+            if (fpsMonitor != null)
+                fpsMonitor.consoleText = "Preparing file access...";
 
-#if UNITY_WEBGL
-        // wait to gets file paths.
-        private IEnumerator GetFilePath()
-        {
-            var getFilePathAsync_faceCascade_Coroutine = Utils.getFilePathAsync(faceCascadeFilename, (result) =>
-            {
-                faceCascadeFilePath = result;
-            });
-            yield return getFilePathAsync_faceCascade_Coroutine;
+            faceCascadeFilePath = await Utils.getFilePathAsyncTask(faceCascadeFilename, cancellationToken: cts.Token);
+            eyeCascadeFilePath1 = await Utils.getFilePathAsyncTask(eyeCascadeFilename1, cancellationToken: cts.Token);
+            eyeCascadeFilePath2 = await Utils.getFilePathAsyncTask(eyeCascadeFilename2, cancellationToken: cts.Token);
 
-            var getFilePathAsync_eyeCascade1_Coroutine = Utils.getFilePathAsync(eyeCascadeFilename1, (result) =>
-            {
-                eyeCascadeFilePath1 = result;
-            });
-            yield return getFilePathAsync_eyeCascade1_Coroutine;
-
-            var getFilePathAsync_eyeCascade2_Coroutine = Utils.getFilePathAsync(eyeCascadeFilename2, (result) =>
-            {
-                eyeCascadeFilePath2 = result;
-            });
-            yield return getFilePathAsync_eyeCascade2_Coroutine;
-
-            getFilePath_Coroutine = null;
+            if (fpsMonitor != null)
+                fpsMonitor.consoleText = "";
 
             Run();
         }
-#endif
 
         private void Run()
         {
@@ -269,27 +243,31 @@ namespace RealTimeFaceRecognitionExample
             // Since we have already initialized everything, lets start in Detection mode.
             m_mode = MODES.MODE_DETECTION;
 
-            coroutineToWaitWebCameraInit = StartCoroutine(waitWebCameraInit(false, 0, 0.5f));
+            multiSource2MatHelper.Initialize();
         }
 
         /// <summary>
-        /// Raises the web cam texture to mat helper inited event.
+        /// Raises the source to mat helper inited event.
         /// </summary>
-        public void OnWebCamTextureToMatHelperInited()
+        public void OnSourceToMatHelperInitialized()
         {
-            Debug.Log("OnWebCamTextureToMatHelperInited");
+            Debug.Log("OnSourceToMatHelperInitialized");
 
-            Mat webCamTextureMat = webCamTextureToMatHelper.GetMat();
+            Mat rgbaMat = multiSource2MatHelper.GetMat();
 
-            if (texture == null || (texture.width != webCamTextureMat.cols() || texture.height != webCamTextureMat.rows()))
-                texture = new Texture2D(webCamTextureMat.cols(), webCamTextureMat.rows(), TextureFormat.RGBA32, false);
+            texture = new Texture2D(rgbaMat.cols(), rgbaMat.rows(), TextureFormat.RGBA32, false);
+            Utils.matToTexture2D(rgbaMat, texture);
 
-            gameObject.transform.localScale = new Vector3(webCamTextureMat.cols(), webCamTextureMat.rows(), 1);
+            // Set the Texture2D as the main texture of the Renderer component attached to the game object
+            gameObject.GetComponent<Renderer>().material.mainTexture = texture;
+
+            // Adjust the scale of the game object to match the dimensions of the texture
+            gameObject.transform.localScale = new Vector3(rgbaMat.cols(), rgbaMat.rows(), 1);
             Debug.Log("Screen.width " + Screen.width + " Screen.height " + Screen.height + " Screen.orientation " + Screen.orientation);
 
+            // Adjust the orthographic size of the main Camera to fit the aspect ratio of the image
             float width = gameObject.transform.localScale.x;
             float height = gameObject.transform.localScale.y;
-
             float widthScale = (float)Screen.width / width;
             float heightScale = (float)Screen.height / height;
             if (widthScale < heightScale)
@@ -300,46 +278,42 @@ namespace RealTimeFaceRecognitionExample
             {
                 Camera.main.orthographicSize = height / 2;
             }
-
-            gameObject.GetComponent<Renderer>().material.mainTexture = texture;
         }
 
         /// <summary>
-        /// Raises the web cam texture to mat helper disposed event.
+        /// Raises the source to mat helper disposed event.
         /// </summary>
-        public void OnWebCamTextureToMatHelperDisposed()
+        public void OnSourceToMatHelperDisposed()
         {
-            Debug.Log("OnWebCamTextureToMatHelperDisposed");
+            Debug.Log("OnSourceToMatHelperDisposed");
         }
 
         /// <summary>
-        /// Raises the web cam texture to mat helper error occurred event.
+        /// Raises the source to mat helper error occurred event.
         /// </summary>
         /// <param name="errorCode">Error code.</param>
-        public void OnWebCamTextureToMatHelperErrorOccurred(WebCamTextureToMatHelper.ErrorCode errorCode)
+        /// <param name="message">Message.</param>
+        public void OnSourceToMatHelperErrorOccurred(Source2MatHelperErrorCode errorCode, string message)
         {
-            Debug.Log("OnWebCamTextureToMatHelperErrorOccurred " + errorCode);
+            Debug.Log("OnSourceToMatHelperErrorOccurred " + errorCode + ":" + message);
+
+            if (fpsMonitor != null)
+            {
+                fpsMonitor.consoleText = "ErrorCode: " + errorCode + ":" + message;
+            }
         }
 
         // Update is called once per frame
         void Update()
         {
-            if (webCamTextureToMatHelper.IsPlaying() && webCamTextureToMatHelper.DidUpdateThisFrame())
+            if (multiSource2MatHelper.IsPlaying() && multiSource2MatHelper.DidUpdateThisFrame())
             {
 
-                Mat rgbaMat = webCamTextureToMatHelper.GetMat();
-                Color32[] colors = webCamTextureToMatHelper.GetBufferColors();
+                Mat rgbaMat = multiSource2MatHelper.GetMat();
 
-                if (rgbaMat != null)
-                {
-                    if (!isWaitingWebCameraInit)
-                    {
-                        // Run Face Recogintion interactively from the webcam. This function runs until the user quits.
-                        recognizeAndTrainUsingWebcam(rgbaMat, faceCascade, eyeCascade1, eyeCascade2);
-                    }
+                recognizeAndTrainUsingWebcam(rgbaMat, faceCascade, eyeCascade1, eyeCascade2);
 
-                    Utils.matToTexture2D(rgbaMat, texture, colors);
-                }
+                Utils.matToTexture2D(rgbaMat, texture);
             }
 
             if (Input.GetMouseButtonUp(0))
@@ -358,33 +332,12 @@ namespace RealTimeFaceRecognitionExample
             }
         }
 
-        // wait web camera initialization.
-        private IEnumerator waitWebCameraInit(bool isChangeCamera = false, float beforWaitTime = 0, float afterWaitTime = 0)
-        {
-            if (isWaitingWebCameraInit)
-                yield break;
-
-            isWaitingWebCameraInit = true;
-            if (beforWaitTime > 0)
-                yield return new WaitForSeconds(beforWaitTime);
-
-            if (isChangeCamera)
-                webCamTextureToMatHelper.Initialize(null, webCamTextureToMatHelper.requestedWidth, webCamTextureToMatHelper.requestedHeight, !webCamTextureToMatHelper.requestedIsFrontFacing);
-            else
-                webCamTextureToMatHelper.Initialize();
-
-            if (afterWaitTime > 0)
-                yield return new WaitForSeconds(afterWaitTime);
-
-            isWaitingWebCameraInit = false;
-        }
-
         /// <summary>
         /// Raises the destroy event.
         /// </summary>
         void OnDestroy()
         {
-            webCamTextureToMatHelper.Dispose();
+            multiSource2MatHelper.Dispose();
 
             if (faceCascade != null && !faceCascade.IsDisposed)
                 faceCascade.Dispose();
@@ -413,14 +366,8 @@ namespace RealTimeFaceRecognitionExample
             if (model != null && !model.IsDisposed)
                 model.Dispose();
 
-
-#if UNITY_WEBGL
-            if (getFilePath_Coroutine != null)
-            {
-                StopCoroutine(getFilePath_Coroutine);
-                ((IDisposable)getFilePath_Coroutine).Dispose();
-            }
-#endif
+            if (cts != null)
+                cts.Dispose();
         }
 
         /// <summary>
@@ -436,7 +383,7 @@ namespace RealTimeFaceRecognitionExample
         /// </summary>
         public void OnPlayButtonClick()
         {
-            webCamTextureToMatHelper.Play();
+            multiSource2MatHelper.Play();
         }
 
         /// <summary>
@@ -444,10 +391,7 @@ namespace RealTimeFaceRecognitionExample
         /// </summary>
         public void OnPauseButtonClick()
         {
-            if (isWaitingWebCameraInit)
-                StopCoroutine(coroutineToWaitWebCameraInit);
-
-            webCamTextureToMatHelper.Pause();
+            multiSource2MatHelper.Pause();
         }
 
         /// <summary>
@@ -455,10 +399,7 @@ namespace RealTimeFaceRecognitionExample
         /// </summary>
         public void OnStopButtonClick()
         {
-            if (isWaitingWebCameraInit)
-                StopCoroutine(coroutineToWaitWebCameraInit);
-
-            webCamTextureToMatHelper.Stop();
+            multiSource2MatHelper.Stop();
         }
 
         /// <summary>
@@ -466,10 +407,7 @@ namespace RealTimeFaceRecognitionExample
         /// </summary>
         public void OnChangeCameraButtonClick()
         {
-            if (isWaitingWebCameraInit)
-                return;
-
-            coroutineToWaitWebCameraInit = StartCoroutine(waitWebCameraInit(true, 0.5f, 0.5f));
+            multiSource2MatHelper.requestedIsFrontFacing = !multiSource2MatHelper.requestedIsFrontFacing;
         }
 
         /// <summary>
