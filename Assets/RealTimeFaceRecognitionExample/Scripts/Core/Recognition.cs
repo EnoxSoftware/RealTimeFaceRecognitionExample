@@ -101,7 +101,7 @@ namespace RealTimeFaceRecognitionExample
             }
             catch (CvException e)
             {
-                //Debug.Log("WARNING: Missing FaceRecognizer properties." + e);
+                Debug.Log("WARNING: Missing FaceRecognizer properties." + e);
                 return new Mat();
             }
         }

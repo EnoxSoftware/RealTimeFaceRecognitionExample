@@ -3,8 +3,8 @@ using OpenCVForUnity.FaceModule;
 using OpenCVForUnity.ImgcodecsModule;
 using OpenCVForUnity.ImgprocModule;
 using OpenCVForUnity.ObjdetectModule;
-using OpenCVForUnity.UnityUtils;
-using OpenCVForUnity.UnityUtils.Helper;
+using OpenCVForUnity.UnityIntegration;
+using OpenCVForUnity.UnityIntegration.Helper.Source2Mat;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -13,6 +13,9 @@ using System.Text;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 using UnityEngine.SceneManagement;
 using Rect = OpenCVForUnity.CoreModule.Rect;
 
@@ -210,18 +213,18 @@ namespace RealTimeFaceRecognitionExample
             fpsMonitor = GetComponent<FpsMonitor>();
 
             multiSource2MatHelper = gameObject.GetComponent<MultiSource2MatHelper>();
-            multiSource2MatHelper.outputColorFormat = Source2MatHelperColorFormat.RGBA;
+            multiSource2MatHelper.OutputColorFormat = Source2MatHelperColorFormat.RGBA;
 
             // Asynchronously retrieves the readable file path from the StreamingAssets directory.
             if (fpsMonitor != null)
-                fpsMonitor.consoleText = "Preparing file access...";
+                fpsMonitor.ConsoleText = "Preparing file access...";
 
-            faceCascadeFilePath = await Utils.getFilePathAsyncTask(faceCascadeFilename, cancellationToken: cts.Token);
-            eyeCascadeFilePath1 = await Utils.getFilePathAsyncTask(eyeCascadeFilename1, cancellationToken: cts.Token);
-            eyeCascadeFilePath2 = await Utils.getFilePathAsyncTask(eyeCascadeFilename2, cancellationToken: cts.Token);
+            faceCascadeFilePath = await OpenCVEnv.GetFilePathTaskAsync(faceCascadeFilename, cancellationToken: cts.Token);
+            eyeCascadeFilePath1 = await OpenCVEnv.GetFilePathTaskAsync(eyeCascadeFilename1, cancellationToken: cts.Token);
+            eyeCascadeFilePath2 = await OpenCVEnv.GetFilePathTaskAsync(eyeCascadeFilename2, cancellationToken: cts.Token);
 
             if (fpsMonitor != null)
-                fpsMonitor.consoleText = "";
+                fpsMonitor.ConsoleText = "";
 
             Run();
         }
@@ -256,7 +259,7 @@ namespace RealTimeFaceRecognitionExample
             Mat rgbaMat = multiSource2MatHelper.GetMat();
 
             texture = new Texture2D(rgbaMat.cols(), rgbaMat.rows(), TextureFormat.RGBA32, false);
-            Utils.matToTexture2D(rgbaMat, texture);
+            OpenCVMatUtils.MatToTexture2D(rgbaMat, texture);
 
             // Set the Texture2D as the main texture of the Renderer component attached to the game object
             gameObject.GetComponent<Renderer>().material.mainTexture = texture;
@@ -299,7 +302,7 @@ namespace RealTimeFaceRecognitionExample
 
             if (fpsMonitor != null)
             {
-                fpsMonitor.consoleText = "ErrorCode: " + errorCode + ":" + message;
+                fpsMonitor.ConsoleText = "ErrorCode: " + errorCode + ":" + message;
             }
         }
 
@@ -313,9 +316,45 @@ namespace RealTimeFaceRecognitionExample
 
                 recognizeAndTrainUsingWebcam(rgbaMat, faceCascade, eyeCascade1, eyeCascade2);
 
-                Utils.matToTexture2D(rgbaMat, texture);
+                OpenCVMatUtils.MatToTexture2D(rgbaMat, texture);
             }
 
+#if ENABLE_INPUT_SYSTEM
+            Vector2? inputPosition = null;
+
+            // mouse
+            var mouse = Mouse.current;
+            if (mouse != null && mouse.leftButton.wasReleasedThisFrame)
+            {
+                inputPosition = mouse.position.ReadValue();
+            }
+
+            // touch
+            var touch = Touchscreen.current;
+            if (inputPosition == null && touch != null)
+            {
+                var primaryTouch = touch.primaryTouch;
+                if (primaryTouch.phase.ReadValue() == UnityEngine.InputSystem.TouchPhase.Ended)
+                {
+                    inputPosition = primaryTouch.position.ReadValue();
+                }
+            }
+
+            if (inputPosition != null)
+            {
+                // Check if the user clicked on one of our GUI buttons..
+                if (isUGUIHit(inputPosition.Value))
+                    return;
+
+                RaycastHit hit;
+                if (!Physics.Raycast(Camera.main.ScreenPointToRay(inputPosition.Value), out hit))
+                    return;
+
+                Vector2 pixelUV = hit.textureCoord;
+
+                if (texture != null) _onMouseUP((int)(texture.width * pixelUV.x), (int)(texture.height * (1 - pixelUV.y)));
+            }
+#else
             if (Input.GetMouseButtonUp(0))
             {
                 // Check if the user clicked on one of our GUI buttons..
@@ -330,6 +369,7 @@ namespace RealTimeFaceRecognitionExample
 
                 if(texture != null)_onMouseUP((int)(texture.width * pixelUV.x), (int)(texture.height * (1 - pixelUV.y)));
             }
+#endif
         }
 
         /// <summary>
@@ -407,7 +447,7 @@ namespace RealTimeFaceRecognitionExample
         /// </summary>
         public void OnChangeCameraButtonClick()
         {
-            multiSource2MatHelper.requestedIsFrontFacing = !multiSource2MatHelper.requestedIsFrontFacing;
+            multiSource2MatHelper.RequestedIsFrontFacing = !multiSource2MatHelper.RequestedIsFrontFacing;
         }
 
         /// <summary>
