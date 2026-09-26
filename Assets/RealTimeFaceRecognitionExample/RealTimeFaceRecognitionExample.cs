@@ -13,14 +13,17 @@ namespace RealTimeFaceRecognitionExample
         public Text exampleTitle;
         public Text versionInfo;
         public ScrollRect scrollRect;
-        static float verticalNormalizedPosition = 1f;
+#if UNITY_6000_5_OR_NEWER
+        [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
+        private static float verticalNormalizedPosition = 1f;
 
         // Use this for initialization
-        void Start()
+        private void Start()
         {
             exampleTitle.text = "RealTimeFaceRecognition Example " + Application.version;
 
-            versionInfo.text = Core.NATIVE_LIBRARY_NAME + " " + OpenCVForUnity.UnityIntegration.OpenCVEnv.GetVersion() + " (" + Core.VERSION + ")";
+            versionInfo.text = Core.NATIVE_LIBRARY_NAME + " " + OpenCVForUnity.UnityIntegration.OpenCVForUnityEnv.GetVersion() + " (" + Core.VERSION + ")";
             versionInfo.text += " / UnityEditor " + Application.unityVersion;
             versionInfo.text += " / ";
 
@@ -54,7 +57,7 @@ namespace RealTimeFaceRecognitionExample
         }
 
         // Update is called once per frame
-        void Update()
+        private void Update()
         {
 
         }
@@ -63,7 +66,6 @@ namespace RealTimeFaceRecognitionExample
         {
             verticalNormalizedPosition = scrollRect.verticalNormalizedPosition;
         }
-
 
         public void OnShowLicenseButtonClick()
         {

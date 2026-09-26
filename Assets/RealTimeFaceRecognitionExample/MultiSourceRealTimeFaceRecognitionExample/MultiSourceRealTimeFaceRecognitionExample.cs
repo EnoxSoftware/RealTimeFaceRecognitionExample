@@ -2,9 +2,10 @@ using OpenCVForUnity.CoreModule;
 using OpenCVForUnity.FaceModule;
 using OpenCVForUnity.ImgcodecsModule;
 using OpenCVForUnity.ImgprocModule;
-using OpenCVForUnity.ObjdetectModule;
+using OpenCVForUnity.XobjdetectModule;
+using OpenCVForUnity.Extensions.SourceToMat;
 using OpenCVForUnity.UnityIntegration;
-using OpenCVForUnity.UnityIntegration.Helper.Source2Mat;
+using OpenCVForUnity.UnityIntegration.Helper.SourceToMat;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -18,6 +19,7 @@ using UnityEngine.InputSystem;
 #endif
 using UnityEngine.SceneManagement;
 using Rect = OpenCVForUnity.CoreModule.Rect;
+using OpenCVForUnity.UnityIntegration.Helper.UI;
 
 namespace RealTimeFaceRecognitionExample
 {
@@ -26,87 +28,86 @@ namespace RealTimeFaceRecognitionExample
     /// Detect and Recognize face in a webcam image using Eigenfaces / Fisherfaces Algorithm.
     /// This code is a rewrite of https://github.com/MasteringOpenCV/code/tree/master/Chapter8_FaceRecognition using "OpenCV for Unity".
     /// </summary>
-    [RequireComponent(typeof(MultiSource2MatHelper))]
+    [RequireComponent(typeof(MultiSourceToMatHelper))]
     public class MultiSourceRealTimeFaceRecognitionExample : MonoBehaviour
     {
         /// <summary>
         /// The texture.
         /// </summary>
-        Texture2D texture;
+        private Texture2D texture;
 
         /// <summary>
         /// The multi source to mat helper.
         /// </summary>
-        MultiSource2MatHelper multiSource2MatHelper;
+        private MultiSourceToMatHelper multiSourceToMatHelper;
 
         /// <summary>
         /// The face cascade.
         /// </summary>
-        CascadeClassifier faceCascade;
+        private CascadeClassifier faceCascade;
 
         /// <summary>
         /// The eye cascade1.
         /// </summary>
-        CascadeClassifier eyeCascade1;
+        private CascadeClassifier eyeCascade1;
 
         /// <summary>
         /// The eye cascade2.
         /// </summary>
-        CascadeClassifier eyeCascade2;
+        private CascadeClassifier eyeCascade2;
 
         /// <summary>
         /// The old processing time.
         /// </summary>
-        float old_processingTime = 0;
+        private float old_processingTime = 0;
 
         /// <summary>
         /// The change in seconds for processing.
         /// </summary>
-        const float CHANGE_IN_SECONDS_FOR_PROCESSING = 0.3f;
+        private const float CHANGE_IN_SECONDS_FOR_PROCESSING = 0.3f;
 
         /// <summary>
         /// The previous identity result.
         /// </summary>
-        int prev_identity;
+        private int prev_identity;
 
         /// <summary>
         /// The previous similarity result.
         /// </summary>
-        double prev_similarity;
+        private double prev_similarity;
 
         /// <summary>
         /// The previously prepreprocessed face result.
         /// </summary>
-        Mat prev_prepreprocessedFace;
+        private Mat prev_prepreprocessedFace;
 
         /// <summary>
         /// The reconstructed face result.
         /// </summary>
-        Mat reconstructedFace;
+        private Mat reconstructedFace;
 
         /// <summary>
         /// The string builder.
         /// </summary>
-        StringBuilder strBuilder = new StringBuilder(100, 100);
-        Scalar BLACK = new Scalar(0, 0, 0, 255);
-        Scalar WHITE = new Scalar(255, 255, 255, 255);
-        Scalar GREEN = new Scalar(0, 255, 0, 255);
-        Scalar LIGHT_BLUE = new Scalar(0, 255, 255, 255);
-        Scalar RED = new Scalar(0, 0, 255, 255);
-        Scalar YELLOW = new Scalar(255, 255, 0, 255);
-        Scalar LIGHT_GRAY = new Scalar(200, 200, 200, 255);
-        Scalar DARK_GRAY = new Scalar(90, 90, 90, 255);
-
+        private StringBuilder strBuilder = new StringBuilder(100, 100);
+        private Scalar BLACK = new Scalar(0, 0, 0, 255);
+        private Scalar WHITE = new Scalar(255, 255, 255, 255);
+        private Scalar GREEN = new Scalar(0, 255, 0, 255);
+        private Scalar LIGHT_BLUE = new Scalar(0, 255, 255, 255);
+        private Scalar RED = new Scalar(0, 0, 255, 255);
+        private Scalar YELLOW = new Scalar(255, 255, 0, 255);
+        private Scalar LIGHT_GRAY = new Scalar(200, 200, 200, 255);
+        private Scalar DARK_GRAY = new Scalar(90, 90, 90, 255);
 
         // The Face Recognition algorithm can be one of these and perhaps more, depending on your version of OpenCV, which must be atleast v2.4.1:
         //    "FaceRecognizer.Eigenfaces":  Eigenfaces, also referred to as PCA (Turk and Pentland, 1991).
         //    "FaceRecognizer.Fisherfaces": Fisherfaces, also referred to as LDA (Belhumeur et al, 1997).
         //    "FaceRecognizer.LBPH":        Local Binary Pattern Histograms (Ahonen et al, 2006). // ...Not implemented in this example.//
-        string facerecAlgorithm = "FaceRecognizer.Fisherfaces";
+        private string facerecAlgorithm = "FaceRecognizer.Fisherfaces";
         // or
         //string facerecAlgorithm = "FaceRecognizer.Eigenfaces";
 
-        const string saveDirectoryName = "RealTimeFaceRecognitionExample";
+        private const string saveDirectoryName = "RealTimeFaceRecognitionExample";
 
         public enum facerecAlgorithmEnumType
         {
@@ -119,7 +120,6 @@ namespace RealTimeFaceRecognitionExample
         /// </summary>
         public facerecAlgorithmEnumType facerecAlgorithmType;
 
-
         // Sets how confident the Face Verification algorithm should be to decide if it is an unknown person or a known person.
         // A value roughly around 0.5 seems OK for Eigenfaces or 0.7 for Fisherfaces, but you may want to adjust it for your
         // conditions, and if you use a different Face Recognition algorithm.
@@ -127,9 +127,8 @@ namespace RealTimeFaceRecognitionExample
         // whereas lower values mean more faces will be classified as "unknown".
         public float UNKNOWN_PERSON_THRESHOLD = 0.7f;
 
-
         // Cascade Classifier file, used for Face Detection.
-        const string faceCascadeFilename = "RealTimeFaceRecognitionExample/lbpcascade_frontalface.xml"; // LBP face detector.
+        private const string faceCascadeFilename = "RealTimeFaceRecognitionExample/lbpcascade_frontalface.xml"; // LBP face detector.
         // or
         //const string faceCascadeFilename = "RealTimeFaceRecognitionExample/haarcascade_frontalface_alt.xml"; // Haar face detector.
         // or
@@ -138,15 +137,15 @@ namespace RealTimeFaceRecognitionExample
         //const string eyeCascadeFilename1 = "RealTimeFaceRecognitionExample/haarcascade_lefteye_2splits.xml"; // Best eye detector for open-or-closed eyes.
         //const string eyeCascadeFilename2 = "RealTimeFaceRecognitionExample/haarcascade_righteye_2splits.xml"; // Best eye detector for open-or-closed eyes.
         // or
-        const string eyeCascadeFilename1 = "RealTimeFaceRecognitionExample/haarcascade_mcs_lefteye.xml"; // Good eye detector for open-or-closed eyes.
-        const string eyeCascadeFilename2 = "RealTimeFaceRecognitionExample/haarcascade_mcs_righteye.xml"; // Good eye detector for open-or-closed eyes.
+        private const string eyeCascadeFilename1 = "RealTimeFaceRecognitionExample/haarcascade_mcs_lefteye.xml"; // Good eye detector for open-or-closed eyes.
+        private const string eyeCascadeFilename2 = "RealTimeFaceRecognitionExample/haarcascade_mcs_righteye.xml"; // Good eye detector for open-or-closed eyes.
         // or
         //const string eyeCascadeFilename1 = "RealTimeFaceRecognitionExample/haarcascade_eye.xml"; // Basic eye detector for open eyes only.
         //const string eyeCascadeFilename2 = "RealTimeFaceRecognitionExample/haarcascade_eye_tree_eyeglasses.xml"; // Basic eye detector for open eyes if they might wear glasses.
 
         // Set the desired face dimensions. Note that "getPreprocessedFace()" will return a square face.
-        const int faceWidth = 70;
-        const int faceHeight = faceWidth;
+        private const int faceWidth = 70;
+        private const int faceHeight = faceWidth;
 
         // Try to set the camera resolution. Note that this only works for some cameras on
         // some computers and only for some drivers, so don't rely on it to work!
@@ -154,21 +153,20 @@ namespace RealTimeFaceRecognitionExample
         //const int DESIRED_CAMERA_HEIGHT = 480;
 
         // Parameters controlling how often to keep new faces when collecting them. Otherwise, the training set could look to similar to each other!
-        const double CHANGE_IN_IMAGE_FOR_COLLECTION = 0.3d; // How much the facial image should change before collecting a new face photo for training.
-        const double CHANGE_IN_SECONDS_FOR_COLLECTION = 1.0d; // How much time must pass before collecting a new face photo for training.
+        private const double CHANGE_IN_IMAGE_FOR_COLLECTION = 0.3d; // How much the facial image should change before collecting a new face photo for training.
+        private const double CHANGE_IN_SECONDS_FOR_COLLECTION = 1.0d; // How much time must pass before collecting a new face photo for training.
 
-        const string windowName = "WebcamFaceRec";
+        private const string windowName = "WebcamFaceRec";
         // Name shown in the GUI window.
-        const int BORDER = 8; // Border between GUI elements to the edge of the image.
+        private const int BORDER = 8; // Border between GUI elements to the edge of the image.
 
-        const bool preprocessLeftAndRightSeparately = true; // Preprocess left & right sides of the face separately, in case there is stronger light on one side.
+        private const bool preprocessLeftAndRightSeparately = true; // Preprocess left & right sides of the face separately, in case there is stronger light on one side.
 
         // Set to true if you want to see many windows created, showing various debug info. Set to 0 otherwise.
-        bool m_debug = true;
-
+        private bool m_debug = true;
 
         // Running mode for the Webcam-based interactive GUI program.
-        string[] MODE_NAMES = new string[7] {
+        private string[] MODE_NAMES = new string[7] {
             "Startup",
             "Detection",
             "Collect Faces",
@@ -177,54 +175,58 @@ namespace RealTimeFaceRecognitionExample
             "Delete All",
             "ERROR!"
         };
-        MODES m_mode = MODES.MODE_STARTUP;
-        int m_selectedPerson = -1;
-        int m_numPersons = 0;
-        List<int> m_latestFaces = new List<int>();
+        private MODES m_mode = MODES.MODE_STARTUP;
+        private int m_selectedPerson = -1;
+        private int m_numPersons = 0;
+        private List<int> m_latestFaces = new List<int>();
 
         // Position of GUI buttons:
-        int m_gui_faces_left = -1;
-        int m_gui_faces_top = -1;
+        private int m_gui_faces_left = -1;
+        private int m_gui_faces_top = -1;
 
         //In recognizeAndTrainUsingWebcam function.
-        BasicFaceRecognizer model;
-        List<Mat> preprocessedFaces = new List<Mat>();
-        List<int> faceLabels = new List<int>();
-        Mat old_prepreprocessedFace;
-        double old_time = 0.0d;
+        private BasicFaceRecognizer model;
+        private List<Mat> preprocessedFaces = new List<Mat>();
+        private List<int> faceLabels = new List<int>();
+        private Mat old_prepreprocessedFace;
+        private double old_time = 0.0d;
 
-        string faceCascadeFilePath;
-        string eyeCascadeFilePath1;
-        string eyeCascadeFilePath2;
+        private string faceCascadeFilePath;
+        private string eyeCascadeFilePath1;
+        private string eyeCascadeFilePath2;
 
         /// <summary>
         /// The FPS monitor.
         /// </summary>
-        FpsMonitor fpsMonitor;
+        private FpsMonitor fpsMonitor;
 
         /// <summary>
         /// The CancellationTokenSource.
         /// </summary>
-        CancellationTokenSource cts = new CancellationTokenSource();
+        private CancellationTokenSource cts = new CancellationTokenSource();
 
         // Use this for initialization
-        async void Start()
+        private async void Start()
         {
             fpsMonitor = GetComponent<FpsMonitor>();
 
-            multiSource2MatHelper = gameObject.GetComponent<MultiSource2MatHelper>();
-            multiSource2MatHelper.OutputColorFormat = Source2MatHelperColorFormat.RGBA;
+            multiSourceToMatHelper = gameObject.GetComponent<MultiSourceToMatHelper>();
+            multiSourceToMatHelper.OutputColorFormat = SourceToMatColorFormat.RGBA;
 
             // Asynchronously retrieves the readable file path from the StreamingAssets directory.
             if (fpsMonitor != null)
+            {
                 fpsMonitor.ConsoleText = "Preparing file access...";
+            }
 
-            faceCascadeFilePath = await OpenCVEnv.GetFilePathTaskAsync(faceCascadeFilename, cancellationToken: cts.Token);
-            eyeCascadeFilePath1 = await OpenCVEnv.GetFilePathTaskAsync(eyeCascadeFilename1, cancellationToken: cts.Token);
-            eyeCascadeFilePath2 = await OpenCVEnv.GetFilePathTaskAsync(eyeCascadeFilename2, cancellationToken: cts.Token);
+            faceCascadeFilePath = await OpenCVForUnityEnv.GetFilePathAsync(faceCascadeFilename, cancellationToken: cts.Token);
+            eyeCascadeFilePath1 = await OpenCVForUnityEnv.GetFilePathAsync(eyeCascadeFilename1, cancellationToken: cts.Token);
+            eyeCascadeFilePath2 = await OpenCVForUnityEnv.GetFilePathAsync(eyeCascadeFilename2, cancellationToken: cts.Token);
 
             if (fpsMonitor != null)
+            {
                 fpsMonitor.ConsoleText = "";
+            }
 
             Run();
         }
@@ -246,7 +248,7 @@ namespace RealTimeFaceRecognitionExample
             // Since we have already initialized everything, lets start in Detection mode.
             m_mode = MODES.MODE_DETECTION;
 
-            multiSource2MatHelper.Initialize();
+            multiSourceToMatHelper.Initialize();
         }
 
         /// <summary>
@@ -256,10 +258,10 @@ namespace RealTimeFaceRecognitionExample
         {
             Debug.Log("OnSourceToMatHelperInitialized");
 
-            Mat rgbaMat = multiSource2MatHelper.GetMat();
+            Mat rgbaMat = multiSourceToMatHelper.FrameMat;
 
             texture = new Texture2D(rgbaMat.cols(), rgbaMat.rows(), TextureFormat.RGBA32, false);
-            OpenCVMatUtils.MatToTexture2D(rgbaMat, texture);
+            OpenCVMatUnityUtils.MatToTexture2D(rgbaMat, texture);
 
             // Set the Texture2D as the main texture of the Renderer component attached to the game object
             gameObject.GetComponent<Renderer>().material.mainTexture = texture;
@@ -281,6 +283,20 @@ namespace RealTimeFaceRecognitionExample
             {
                 Camera.main.orthographicSize = height / 2;
             }
+
+            if (!multiSourceToMatHelper.IsPlaying && !multiSourceToMatHelper.IsPaused)
+            {
+                multiSourceToMatHelper.Play();
+            }
+        }
+
+        /// <summary>
+        /// Recreates example-owned resources after the frame layout changes.
+        /// </summary>
+        public void OnFrameMatLayoutChanged()
+        {
+            DisposeFrameResources();
+            OnSourceToMatHelperInitialized();
         }
 
         /// <summary>
@@ -289,6 +305,7 @@ namespace RealTimeFaceRecognitionExample
         public void OnSourceToMatHelperDisposed()
         {
             Debug.Log("OnSourceToMatHelperDisposed");
+            DisposeFrameResources();
         }
 
         /// <summary>
@@ -296,7 +313,7 @@ namespace RealTimeFaceRecognitionExample
         /// </summary>
         /// <param name="errorCode">Error code.</param>
         /// <param name="message">Message.</param>
-        public void OnSourceToMatHelperErrorOccurred(Source2MatHelperErrorCode errorCode, string message)
+        public void OnSourceToMatHelperErrorOccurred(SourceToMatErrorCode errorCode, string message)
         {
             Debug.Log("OnSourceToMatHelperErrorOccurred " + errorCode + ":" + message);
 
@@ -307,16 +324,16 @@ namespace RealTimeFaceRecognitionExample
         }
 
         // Update is called once per frame
-        void Update()
+        private void Update()
         {
-            if (multiSource2MatHelper.IsPlaying() && multiSource2MatHelper.DidUpdateThisFrame())
+            if (multiSourceToMatHelper.IsPlaying && multiSourceToMatHelper.DidUpdateThisFrame)
             {
 
-                Mat rgbaMat = multiSource2MatHelper.GetMat();
+                Mat rgbaMat = multiSourceToMatHelper.FrameMat;
 
                 recognizeAndTrainUsingWebcam(rgbaMat, faceCascade, eyeCascade1, eyeCascade2);
 
-                OpenCVMatUtils.MatToTexture2D(rgbaMat, texture);
+                OpenCVMatUnityUtils.MatToTexture2D(rgbaMat, texture);
             }
 
 #if ENABLE_INPUT_SYSTEM
@@ -359,15 +376,21 @@ namespace RealTimeFaceRecognitionExample
             {
                 // Check if the user clicked on one of our GUI buttons..
                 if (isUGUIHit(Input.mousePosition))
+                {
                     return;
+                }
 
-                RaycastHit hit;
-                if (!Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit))
+                if (!Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit))
+                {
                     return;
+                }
 
                 Vector2 pixelUV = hit.textureCoord;
 
-                if(texture != null)_onMouseUP((int)(texture.width * pixelUV.x), (int)(texture.height * (1 - pixelUV.y)));
+                if (texture != null)
+                {
+                    _onMouseUP((int)(texture.width * pixelUV.x), (int)(texture.height * (1 - pixelUV.y)));
+                }
             }
 #endif
         }
@@ -375,39 +398,64 @@ namespace RealTimeFaceRecognitionExample
         /// <summary>
         /// Raises the destroy event.
         /// </summary>
-        void OnDestroy()
+        private void OnDestroy()
         {
-            multiSource2MatHelper.Dispose();
-
             if (faceCascade != null && !faceCascade.IsDisposed)
+            {
                 faceCascade.Dispose();
+            }
 
             if (eyeCascade1 != null && !eyeCascade1.IsDisposed)
+            {
                 eyeCascade1.Dispose();
+            }
 
             if (eyeCascade2 != null && !eyeCascade2.IsDisposed)
+            {
                 eyeCascade2.Dispose();
+            }
 
             foreach (Mat face in preprocessedFaces)
             {
                 if (face != null && !face.IsDisposed)
+                {
                     face.Dispose();
+                }
             }
 
             if (old_prepreprocessedFace != null && !old_prepreprocessedFace.IsDisposed)
+            {
                 old_prepreprocessedFace.Dispose();
+            }
 
             if (prev_prepreprocessedFace != null && !prev_prepreprocessedFace.IsDisposed)
+            {
                 prev_prepreprocessedFace.Dispose();
+            }
 
             if (reconstructedFace != null && !reconstructedFace.IsDisposed)
+            {
                 reconstructedFace.Dispose();
+            }
 
             if (model != null && !model.IsDisposed)
+            {
                 model.Dispose();
+            }
 
             if (cts != null)
+            {
                 cts.Dispose();
+            }
+        }
+
+        private void DisposeFrameResources()
+        {
+            if (texture != null)
+            {
+                Texture2D.Destroy(texture);
+                texture = null;
+            }
         }
 
         /// <summary>
@@ -423,7 +471,7 @@ namespace RealTimeFaceRecognitionExample
         /// </summary>
         public void OnPlayButtonClick()
         {
-            multiSource2MatHelper.Play();
+            multiSourceToMatHelper.Play();
         }
 
         /// <summary>
@@ -431,7 +479,7 @@ namespace RealTimeFaceRecognitionExample
         /// </summary>
         public void OnPauseButtonClick()
         {
-            multiSource2MatHelper.Pause();
+            multiSourceToMatHelper.Pause();
         }
 
         /// <summary>
@@ -439,7 +487,7 @@ namespace RealTimeFaceRecognitionExample
         /// </summary>
         public void OnStopButtonClick()
         {
-            multiSource2MatHelper.Stop();
+            multiSourceToMatHelper.Stop();
         }
 
         /// <summary>
@@ -447,7 +495,10 @@ namespace RealTimeFaceRecognitionExample
         /// </summary>
         public void OnChangeCameraButtonClick()
         {
-            multiSource2MatHelper.RequestedIsFrontFacing = !multiSource2MatHelper.RequestedIsFrontFacing;
+            if (multiSourceToMatHelper.ActiveHelper is ICameraFacingToMatHelperControls cameraFacingControls)
+            {
+                cameraFacingControls.RequestedIsFrontFacing = !cameraFacingControls.IsFrontFacing;
+            }
         }
 
         /// <summary>
@@ -604,7 +655,10 @@ namespace RealTimeFaceRecognitionExample
                 m_latestFaces.Add(i);
                 preprocessedFaces.Add(Imgcodecs.imread(Path.Combine(loadDirectoryPath, "preprocessedface" + i + "." + format), 0));
                 if (preprocessedFaces[i].total() == 0)
+                {
                     preprocessedFaces[i] = new Mat(faceHeight, faceWidth, CvType.CV_8UC1, new Scalar(128));
+                }
+
                 faceLabels.Add(i);
             }
 
@@ -675,8 +729,12 @@ namespace RealTimeFaceRecognitionExample
         private bool isPointInRect(Point pt, Rect rc)
         {
             if (pt.x >= rc.x && pt.x <= (rc.x + rc.width - 1))
+            {
                 if (pt.y >= rc.y && pt.y <= (rc.y + rc.height - 1))
+                {
                     return true;
+                }
+            }
 
             return false;
         }
@@ -764,7 +822,9 @@ namespace RealTimeFaceRecognitionExample
                 bool gotFaceAndEyes = false;
 
                 if (preprocessedFace != null && preprocessedFace.total() > 0)
+                {
                     gotFaceAndEyes = true;
+                }
 
                 // Draw an anti-aliased rectangle around the detected face.
                 if (faceRect.width > 0)
@@ -835,7 +895,6 @@ namespace RealTimeFaceRecognitionExample
                             old_time = current_time;
                         }
                     }
-
                 }
                 else if (m_mode == MODES.MODE_TRAINING)
                 {
@@ -873,7 +932,6 @@ namespace RealTimeFaceRecognitionExample
                         // Since there isn't enough training data, go back to the face collection mode!
                         m_mode = MODES.MODE_COLLECT_FACES;
                     }
-
                 }
                 else if (m_mode == MODES.MODE_RECOGNITION)
                 {
@@ -893,7 +951,9 @@ namespace RealTimeFaceRecognitionExample
 
                         // If the reconstructed face is incorrect, return to COLLECT FACES mode.
                         if (reconstructedFace.empty())
+                        {
                             m_mode = MODES.MODE_COLLECT_FACES;
+                        }
 
                         // Verify whether the reconstructed face looks like the preprocessed face, otherwise it is probably an unknown person.
                         double similarity = Recognition.GetSimilarity(preprocessedFace, reconstructedFace);
@@ -920,7 +980,6 @@ namespace RealTimeFaceRecognitionExample
                         prev_similarity = similarity;
                         Debug.Log("Identity: " + outputStr + ". Similarity: " + similarity + ". Confidence: " + confidence);
                     }
-
                 }
                 else if (m_mode == MODES.MODE_DELETE_ALL)
                 {
@@ -966,7 +1025,9 @@ namespace RealTimeFaceRecognitionExample
                 strBuilder.Append(" people builds.");
             }
             else if (m_mode == MODES.MODE_RECOGNITION)
+            {
                 strBuilder.Append("Click people on the right to add more faces to them, or [Add Person] for someone new.");
+            }
 
             if (strBuilder.Length > 0)
             {
@@ -1131,7 +1192,9 @@ namespace RealTimeFaceRecognitionExample
             foreach (Mat face in preprocessedFaces)
             {
                 if (face != null && !face.IsDisposed)
+                {
                     face.Dispose();
+                }
             }
             preprocessedFaces.Clear();
 
@@ -1161,7 +1224,7 @@ namespace RealTimeFaceRecognitionExample
         }
     }
 
-    enum MODES
+    internal enum MODES
     {
         MODE_STARTUP,
         MODE_DETECTION,

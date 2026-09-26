@@ -1,7 +1,7 @@
+using System.Collections.Generic;
 using OpenCVForUnity.CoreModule;
 using OpenCVForUnity.ImgprocModule;
-using OpenCVForUnity.ObjdetectModule;
-using System.Collections.Generic;
+using OpenCVForUnity.XobjdetectModule;
 using UnityEngine;
 using Rect = OpenCVForUnity.CoreModule.Rect;
 
@@ -13,9 +13,21 @@ namespace RealTimeFaceRecognitionExample
     /// </summary>
     public static class DetectObject
     {
+#if UNITY_6000_5_OR_NEWER
+        [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
         private static Mat gray;
+#if UNITY_6000_5_OR_NEWER
+        [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
         private static Mat inputImg;
+#if UNITY_6000_5_OR_NEWER
+        [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
         private static Mat equalizedImg;
+#if UNITY_6000_5_OR_NEWER
+        [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
         private static MatOfRect matOfRectObjects = new MatOfRect();
 
         // Search for objects such as faces in the image using the given parameters, storing the multiple cv::Rects into 'objects'.
@@ -25,7 +37,9 @@ namespace RealTimeFaceRecognitionExample
         {
             // If the input image is not grayscale, then convert the RGB or RGBA color image to grayscale.
             if (gray == null)
+            {
                 gray = new Mat();
+            }
 
             if (img.channels() == 3)
             {
@@ -43,7 +57,9 @@ namespace RealTimeFaceRecognitionExample
 
             // Possibly shrink the image, to run much faster.
             if (inputImg == null)
+            {
                 inputImg = new Mat();
+            }
 
             float scale = img.cols() / (float)scaledWidth;
             if (img.cols() > scaledWidth)
@@ -60,7 +76,9 @@ namespace RealTimeFaceRecognitionExample
 
             // Standardize the brightness and contrast to improve dark images.
             if (equalizedImg == null)
+            {
                 equalizedImg = new Mat();
+            }
 
             Imgproc.equalizeHist(inputImg, equalizedImg);
 
@@ -84,13 +102,24 @@ namespace RealTimeFaceRecognitionExample
             for (int i = 0; i < objects.Count; i++)
             {
                 if (objects[i].x < 0)
+                {
                     objects[i].x = 0;
+                }
+
                 if (objects[i].y < 0)
+                {
                     objects[i].y = 0;
+                }
+
                 if (objects[i].x + objects[i].width > img.cols())
+                {
                     objects[i].x = img.cols() - objects[i].width;
+                }
+
                 if (objects[i].y + objects[i].height > img.rows())
+                {
                     objects[i].y = img.rows() - objects[i].height;
+                }
             }
             // Return with the detected face rectangles stored in "objects".
         }
@@ -102,7 +131,7 @@ namespace RealTimeFaceRecognitionExample
         public static void DetectLargestObject(Mat img, CascadeClassifier cascade, out Rect largestObject, int scaledWidth = 320)
         {
             // Only search for just 1 object (the biggest in the image).
-            int flags = Objdetect.CASCADE_FIND_BIGGEST_OBJECT;// | CASCADE_DO_ROUGH_SEARCH;
+            int flags = Xobjdetect.CASCADE_FIND_BIGGEST_OBJECT;// | CASCADE_DO_ROUGH_SEARCH;
             // Smallest object size.
             Size minFeatureSize = new Size(20, 20);
             // How detailed should the search be. Must be larger than 1.0.
@@ -112,8 +141,7 @@ namespace RealTimeFaceRecognitionExample
             int minNeighbors = 4;
 
             // Perform Object or Face Detection, looking for just 1 object (the biggest in the image).
-            List<Rect> objects;
-            detectObjectsCustom(img, cascade, out objects, scaledWidth, flags, minFeatureSize, searchScaleFactor, minNeighbors);
+            detectObjectsCustom(img, cascade, out List<Rect> objects, scaledWidth, flags, minFeatureSize, searchScaleFactor, minNeighbors);
             if (objects.Count > 0)
             {
                 // Return the only detected object.
@@ -133,7 +161,7 @@ namespace RealTimeFaceRecognitionExample
         public static void DetectManyObjects(Mat img, CascadeClassifier cascade, out List<Rect> objects, int scaledWidth = 320)
         {
             // Search for many objects in the one image.
-            int flags = Objdetect.CASCADE_SCALE_IMAGE;
+            int flags = Xobjdetect.CASCADE_SCALE_IMAGE;
 
             // Smallest object size.
             Size minFeatureSize = new Size(20, 20);

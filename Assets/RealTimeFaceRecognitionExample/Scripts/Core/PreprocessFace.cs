@@ -1,8 +1,10 @@
-using OpenCVForUnity.CoreModule;
-using OpenCVForUnity.ImgprocModule;
-using OpenCVForUnity.ObjdetectModule;
-using OpenCVForUnity.UnityIntegration;
 using System;
+using OpenCVForUnity.CoreModule;
+using OpenCVForUnity.Extensions;
+using OpenCVForUnity.GeometryModule;
+using OpenCVForUnity.ImgprocModule;
+using OpenCVForUnity.UnityIntegration;
+using OpenCVForUnity.XobjdetectModule;
 using UnityEngine;
 using Rect = OpenCVForUnity.CoreModule.Rect;
 
@@ -14,17 +16,26 @@ namespace RealTimeFaceRecognitionExample
     /// </summary>
     public static class PreprocessFace
     {
-        static Scalar BLACK = new Scalar(0);
-        static Scalar WHITE = new Scalar(255);
-        static Scalar GRAY = new Scalar(128);
+#if UNITY_6000_5_OR_NEWER
+        [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
+        private static Scalar BLACK = new Scalar(0);
+#if UNITY_6000_5_OR_NEWER
+        [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
+        private static Scalar WHITE = new Scalar(255);
+#if UNITY_6000_5_OR_NEWER
+        [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+#endif
+        private static Scalar GRAY = new Scalar(128);
 
-        const double DESIRED_LEFT_EYE_X = 0.16d;
+        private const double DESIRED_LEFT_EYE_X = 0.16d;
         // Controls how much of the face is visible after preprocessing.
-        const double DESIRED_LEFT_EYE_Y = 0.14d;
-        const double FACE_ELLIPSE_CY = 0.40d;
-        const double FACE_ELLIPSE_W = 0.50d;
+        private const double DESIRED_LEFT_EYE_Y = 0.14d;
+        private const double FACE_ELLIPSE_CY = 0.40d;
+        private const double FACE_ELLIPSE_W = 0.50d;
         // Should be atleast 0.5
-        const double FACE_ELLIPSE_H = 0.80d;
+        private const double FACE_ELLIPSE_H = 0.80d;
         // Controls how tall the face mask is.
 
         // Search for both eyes within the given face image. Returns the eye centers in 'leftEye' and 'rightEye',
@@ -65,17 +76,21 @@ namespace RealTimeFaceRecognitionExample
 
             Mat topLeftOfFace = new Mat(face, new Rect(leftX, topY, widthX, heightY));
             Mat topRightOfFace = new Mat(face, new Rect(rightX, topY, widthX, heightY));
-            Rect leftEyeRect, rightEyeRect;
 
             // Return the search windows to the caller, if desired.
             if (searchedLeftEye != null)
+            {
                 searchedLeftEye = new Rect(leftX, topY, widthX, heightY);
+            }
+
             if (searchedRightEye != null)
+            {
                 searchedRightEye = new Rect(rightX, topY, widthX, heightY);
+            }
 
             // Search the left region, then the right region using the 1st eye detector.
-            DetectObject.DetectLargestObject(topLeftOfFace, eyeCascade1, out leftEyeRect, topLeftOfFace.cols());
-            DetectObject.DetectLargestObject(topRightOfFace, eyeCascade1, out rightEyeRect, topRightOfFace.cols());
+            DetectObject.DetectLargestObject(topLeftOfFace, eyeCascade1, out Rect leftEyeRect, topLeftOfFace.cols());
+            DetectObject.DetectLargestObject(topRightOfFace, eyeCascade1, out Rect rightEyeRect, topRightOfFace.cols());
 
             // If the eye was not detected, try a different cascade classifier.
             if (leftEyeRect.width <= 0 /*&& !eyeCascade2.empty()*/)
@@ -152,11 +167,11 @@ namespace RealTimeFaceRecognitionExample
 
                     // 3) Combine the left half and right half and whole face together, so that it has a smooth transition.
                     byte[] wholeFace_byte = new byte[wholeFace.total() * wholeFace.elemSize()];
-                    OpenCVMatUtils.CopyFromMat<byte>(wholeFace, wholeFace_byte);
+                    MatBufferUtils.CopyFromMat<byte>(wholeFace, wholeFace_byte);
                     byte[] leftSide_byte = new byte[leftSide.total() * leftSide.elemSize()];
-                    OpenCVMatUtils.CopyFromMat<byte>(leftSide, leftSide_byte);
+                    MatBufferUtils.CopyFromMat<byte>(leftSide, leftSide_byte);
                     byte[] rightSide_byte = new byte[rightSide.total() * rightSide.elemSize()];
-                    OpenCVMatUtils.CopyFromMat<byte>(rightSide, rightSide_byte);
+                    MatBufferUtils.CopyFromMat<byte>(rightSide, rightSide_byte);
 
                     int leftSide_w = leftSide.cols();
                     int rightSide_w = rightSide.cols();
@@ -192,7 +207,7 @@ namespace RealTimeFaceRecognitionExample
                             }
                         }// end x loop
                     }//end y loop
-                    OpenCVMatUtils.CopyToMat(wholeFace_byte, faceImg);
+                    MatBufferUtils.CopyToMat(wholeFace_byte, faceImg);
                 }
             }
         }
@@ -216,19 +231,32 @@ namespace RealTimeFaceRecognitionExample
 
             // Mark the detected face region and eye search regions as invalid, in case they aren't detected.
             if (storeFaceRect != null)
+            {
                 storeFaceRect.width = -1;
+            }
+
             if (storeLeftEye != null)
+            {
                 storeLeftEye.x = -1;
+            }
+
             if (storeRightEye != null)
+            {
                 storeRightEye.x = -1;
+            }
+
             if (searchedLeftEye != null)
+            {
                 searchedLeftEye.width = -1;
+            }
+
             if (searchedRightEye != null)
+            {
                 searchedRightEye.width = -1;
+            }
 
             // Find the largest face.
-            Rect faceRect;
-            DetectObject.DetectLargestObject(srcImg, faceCascade, out faceRect);
+            DetectObject.DetectLargestObject(srcImg, faceCascade, out Rect faceRect);
 
             // Check if a face was detected.
             if (faceRect.width > 0)
@@ -236,7 +264,9 @@ namespace RealTimeFaceRecognitionExample
 
                 // Give the face rect to the caller if desired.
                 if (storeFaceRect != null)
+                {
                     storeFaceRect = faceRect;
+                }
 
                 // Get the detected face image.
                 using (Mat faceImg = new Mat(srcImg, faceRect))
@@ -260,14 +290,18 @@ namespace RealTimeFaceRecognitionExample
                         }
 
                         // Search for the 2 eyes at the full resolution, since eye detection needs max resolution possible!
-                        Point leftEye, rightEye;
-                        detectBothEyes(gray, eyeCascade1, eyeCascade2, out leftEye, out rightEye, ref searchedLeftEye, ref searchedRightEye);
+                        detectBothEyes(gray, eyeCascade1, eyeCascade2, out Point leftEye, out Point rightEye, ref searchedLeftEye, ref searchedRightEye);
 
                         // Give the eye results to the caller if desired.
                         if (storeLeftEye != null)
+                        {
                             storeLeftEye = leftEye;
+                        }
+
                         if (storeRightEye != null)
+                        {
                             storeRightEye = rightEye;
+                        }
 
                         // Check if both eyes were detected.
                         if (leftEye.x >= 0 && rightEye.x >= 0)
@@ -293,7 +327,7 @@ namespace RealTimeFaceRecognitionExample
                             double desiredLen = (DESIRED_RIGHT_EYE_X - DESIRED_LEFT_EYE_X) * desiredFaceWidth;
                             double scale = desiredLen / len;
                             // Get the transformation matrix for rotating and scaling the face to the desired angle & size.
-                            Mat rot_mat = Imgproc.getRotationMatrix2D(eyesCenter, angle, scale);
+                            Mat rot_mat = Geometry.getRotationMatrix2D(eyesCenter, angle, scale);
                             // Shift the center of the eyes to be the desired center between the eyes.
                             double[] shiftX = rot_mat.get(0, 2);
                             shiftX[0] += desiredFaceWidth * 0.5f - eyesCenter.x;
